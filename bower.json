@@ -1,0 +1,6 @@
+{
+  "name": "lerp-test",
+  "main": "dist/lerp-test.min.js",
+  "dependencies": {
+  }
+}
