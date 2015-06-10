@@ -1,39 +1,46 @@
 var $ = require('dragonjs');
 
-/**
- * @return {Sprite}
- */
-module.exports = function (opts) {
-    return $.Sprite({
-        name: 'drag',
-        collisionSets: [
-            $.collisions,
-            require('../collisions/lerp.js')
-        ],
-        mask: $.Rectangle(
-            $.Point(),
-            $.Dimension(64, 64)
-        ),
-        strips: {
-            'drag': $.AnimationStrip({
-                sheet: $.SpriteSheet({
-                    src: 'drag.png'
-                }),
-                start: $.Point(10, 10),
-                size: $.Dimension(64, 64),
-                frames: 5,
-                speed: 10
+module.exports = $.Sprite({
+    name: 'drag',
+    solid: true,
+    depth: 10,
+    collisionSets: [
+        $.collisions,
+        require('../collisions/lerp.js')
+    ],
+    mask: $.Rectangle(
+        $.Point(),
+        $.Dimension(32, 32)
+    ),
+    strips: {
+        'drag': $.AnimationStrip({
+            sheet: $.SpriteSheet({
+                src: 'drag.png'
             })
-        },
-        pos: $.Point(100, 100),
-        depth: 2,
-        on: {
-            'colliding/screentap': function () {
+        })
+    },
+    pos: $.Point(20, 20),
+    on: {
+        'colliding/screendrag': function () {
+            if (!this.dragging) {
+                this.dragging = true;
+                $.Mouse.on.up(function () {
+                    this.dragging = false;
+                }, this);
             }
         }
-    }).extend({
-        update: function () {
-            this.base.update();
+    }
+}).extend({
+    dragging: false,
+    update: function () {
+        var offset;
+        if (this.dragging && $.Mouse.is.down) {
+            offset = $.Mouse.offset;
+            this.move(
+                offset.x - this.size.width / 2,
+                offset.y - this.size.height / 2
+            );
         }
-    });
-};
+        this.base.update();
+    }
+});
