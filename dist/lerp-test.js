@@ -681,27 +681,46 @@ var Counter = require('./id-counter.js'),
 
 /**
  * @param {Shape} [opts.mask] Defaults to Rectangle.
- * @param {String} opts.name
+ * @param {String} [opts.name]
+ * @param {Boolean} [opts.solid] True to collide with other
+ * solid sprites.
  * @param {Array|CollisionHandler} [opts.collisionSets]
- * @param {Object} [opts.on] Dictionary of events.
- * @param {Object} [opts.one] Dictionary of one-time events.
+ * @param {Map Of Functions} [opts.on] Dictionary of events.
+ * @param {Map of Functions} [opts.one] Dictionary of one-time events.
  */
 module.exports = function (opts) {
     var activeCollisions = {},
         collisionsThisFrame = {},
         collisionSets = [],
-        updated = false;
+        updated = false,
+        lastPos = Point();
 
     if (opts.collisionSets) {
         collisionSets = [].concat(opts.collisionSets);
     }
 
+    opts.on = opts.on || {};
+    opts.on['dragon/colliding/solid'] = function (other) {
+            if (this.name === 'drag' && lastPos.x !== this.pos.x) {
+                var logit = true;
+                console.debug('>>>', lastPos.x, lastPos.y);
+            }
+        this.move(
+            lastPos.x,
+            lastPos.y
+        );
+            if (logit)
+                console.debug('\t>', lastPos.x, lastPos.y);
+    };
+
     return Item().extend({
         id: Counter.nextId,
         name: opts.name || 'dragon-collidable',
+        solid: opts.solid || false,
         mask: opts.mask || Rectangle(),
         offset: opts.offset || Point(),
         move: function (pos) {
+            lastPos = this.mask.pos();
             this.mask.move(
                 pos.x + this.offset.x,
                 pos.y + this.offset.y
@@ -712,10 +731,10 @@ module.exports = function (opts) {
         },
         update: function () {
             if (!updated) {
+                updated = true;
                 collisionSets.forEach(function (handler) {
                     handler.update(this);
                 }, this);
-                updated = true;
             }
         },
         teardown: function () {
@@ -789,6 +808,9 @@ module.exports = function (opts) {
                                 pivot.trigger('collide/' + other.name, other);
                             }
                             pivot.trigger('colliding/' + other.name, other);
+                            if (pivot.solid && other.solid) {
+                                pivot.trigger('dragon/colliding/solid', other);
+                            }
                         } else {
                             if (colliding) {
                                 pivot.removeCollision(other.id);
@@ -1865,6 +1887,9 @@ module.exports = function (opts) {
     return BaseClass({
         x: pos.x,
         y: pos.y,
+        pos: function () {
+            return Point(this.x, this.y);
+        },
         name: opts.name,
         move: BaseClass.Abstract,
         resize: BaseClass.Abstract,
@@ -1946,6 +1971,8 @@ var BaseClass = require('baseclassjs'),
  * @param {Boolean} [opts.freemask] Defaults to false. True
  * to decouple the position of the mask from the position
  * of the sprite.
+ * @param {Boolean} [opts.solid] True to collide with other
+ * solid sprites.
  * @param {Boolean} [opts.drawing] Defaults to false.
  * @param {Boolean} [opts.updating] Defaults to false.
  * @param {Shape} [opts.mask] Defaults to Rectangle.
