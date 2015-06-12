@@ -693,24 +693,20 @@ module.exports = function (opts) {
         collisionsThisFrame = {},
         collisionSets = [],
         updated = false,
-        lastPos = Point();
+        lastPos;
 
     if (opts.collisionSets) {
         collisionSets = [].concat(opts.collisionSets);
     }
 
     opts.on = opts.on || {};
-    opts.on['dragon/colliding/solid'] = function (other) {
-            if (this.name === 'drag' && lastPos.x !== this.pos.x) {
-                var logit = true;
-                console.debug('>>>', lastPos.x, lastPos.y);
-            }
-        this.move(
-            lastPos.x,
-            lastPos.y
-        );
-            if (logit)
-                console.debug('\t>', lastPos.x, lastPos.y);
+    opts.on['colliding/$/solid'] = function (other) {
+        if (lastPos) {
+            this.move(
+                lastPos.x,
+                lastPos.y
+            );
+        }
     };
 
     return Item().extend({
@@ -720,11 +716,18 @@ module.exports = function (opts) {
         mask: opts.mask || Rectangle(),
         offset: opts.offset || Point(),
         move: function (pos) {
-            lastPos = this.mask.pos();
-            this.mask.move(
-                pos.x + this.offset.x,
-                pos.y + this.offset.y
-            );
+            var curPos = this.mask.pos(),
+                newPos = Point(
+                    pos.x + this.offset.x,
+                    pos.y + this.offset.y
+                );
+            if (!newPos.equals(curPos)) {
+                lastPos = curPos;
+                this.mask.move(
+                    newPos.x,
+                    newPos.y
+                );
+            }
         },
         intersects: function (mask) {
             return this.mask.intersects(mask);
@@ -790,12 +793,13 @@ module.exports = function (opts) {
         handleCollisions: function () {
             activeCollisions.forEach(function (pivot) {
                 activeCollisions.forEach(function (other) {
-                    var intersects, colliding,
+                    var intersects, colliding, solids,
                         valid = pivot.canCollideWith(other.id);
 
                     if (valid) {
-                        intersects = pivot.intersects(other.mask),
+                        intersects = pivot.intersects(other.mask);
                         colliding = pivot.isCollidingWith(other.id);
+                        solids = pivot.solid && other.solid;
                         /**
                          * (colliding) ongoing intersection
                          * (collide) first collided: no collide -> colliding
@@ -806,10 +810,13 @@ module.exports = function (opts) {
                             pivot.addCollision(other.id);
                             if (!colliding) {
                                 pivot.trigger('collide/' + other.name, other);
+                                if (solids) {
+                                    pivot.trigger('collide/$/solid', other);
+                                }
                             }
                             pivot.trigger('colliding/' + other.name, other);
-                            if (pivot.solid && other.solid) {
-                                pivot.trigger('dragon/colliding/solid', other);
+                            if (solids) {
+                                pivot.trigger('colliding/$/solid', other);
                             }
                         } else {
                             if (colliding) {
@@ -1578,14 +1585,39 @@ function Point(x, y) {
     return {
         x: x || 0,
         y: y || 0,
+        /**
+         * @return {Point}
+         */
         clone: function () {
             return Point(this.x, this.y);
         },
+        /**
+         * @param {Point} other
+         * @return {Boolean}
+         */
         equals: function (other) {
             return (
                 this.x === other.x &&
                 this.y === other.y
             );
+        },
+        /**
+         * @param {Point} offset
+         * @return {Point} This point after shifting.
+         */
+        shift: function (offset) {
+            this.x += offset.x;
+            this.y += offset.y;
+            return this;
+        },
+        /**
+         * @param {Point} pos
+         * @return {Point} This point after moving.
+         */
+        move: function (pos) {
+            this.x = pos.x;
+            this.y = pos.y;
+            return this;
         }
     };
 }
@@ -2516,10 +2548,11 @@ var $ = require('dragonjs');
 $.addScreens([
     require('./screens/lerp.js')
 ]);
-$.run(false);
+$.run(true);
 
 },{"./screens/lerp.js":52,"dragonjs":16}],52:[function(require,module,exports){
-var $ = require('dragonjs');
+var $ = require('dragonjs'),
+    Static = require('../sprites/static.js');
 
 module.exports = $.Screen({
     name: 'lerp',
@@ -2527,7 +2560,15 @@ module.exports = $.Screen({
         require('../collisions/lerp.js')
     ],
     spriteSet: [
-        require('../sprites/static.js'),
+        Static({
+            pos: $.Point(
+                $.canvas.width / 2 - 32,
+                $.canvas.height / 2 - 32
+            )
+        }),
+        Static({
+            pos: $.Point(300, 200)
+        }),
         require('../sprites/drag.js')
     ],
     one: {
@@ -2536,10 +2577,10 @@ module.exports = $.Screen({
         }
     }
 }).extend({
-    draw: function (ctx) {
+    draw: function (ctx, debug) {
         ctx.fillStyle = '#fafafa';
         ctx.fillRect(0, 0, $.canvas.width, $.canvas.height);
-        this.base.draw(ctx);
+        this.base.draw(ctx, debug);
     }
 });
 
@@ -2594,27 +2635,26 @@ module.exports = $.Sprite({
 },{"../collisions/lerp.js":50,"dragonjs":16}],54:[function(require,module,exports){
 var $ = require('dragonjs');
 
-module.exports = $.Sprite({
-    name: 'static',
-    solid: true,
-    collisionSets: [
-        require('../collisions/lerp.js')
-    ],
-    mask: $.Rectangle(
-        $.Point(),
-        $.Dimension(64, 64)
-    ),
-    strips: {
-        'static': $.AnimationStrip({
-            sheet: $.SpriteSheet({
-                src: 'static.png'
+module.exports = function (opts) {
+    return $.Sprite({
+        name: 'static',
+        solid: false,
+        collisionSets: [
+            require('../collisions/lerp.js')
+        ],
+        mask: $.Rectangle(
+            $.Point(),
+            $.Dimension(64, 64)
+        ),
+        strips: {
+            'static': $.AnimationStrip({
+                sheet: $.SpriteSheet({
+                    src: 'static.png'
+                })
             })
-        })
-    },
-    pos: $.Point(
-        $.canvas.width / 2 - 32,
-        $.canvas.height / 2 - 32
-    )
-});
+        },
+        pos: opts.pos
+    });
+};
 
 },{"../collisions/lerp.js":50,"dragonjs":16}]},{},[51]);

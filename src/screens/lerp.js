@@ -1,4 +1,5 @@
-var $ = require('dragonjs');
+var $ = require('dragonjs'),
+    Static = require('../sprites/static.js');
 
 module.exports = $.Screen({
     name: 'lerp',
@@ -6,7 +7,15 @@ module.exports = $.Screen({
         require('../collisions/lerp.js')
     ],
     spriteSet: [
-        require('../sprites/static.js'),
+        Static({
+            pos: $.Point(
+                $.canvas.width / 2 - 32,
+                $.canvas.height / 2 - 32
+            )
+        }),
+        Static({
+            pos: $.Point(300, 200)
+        }),
         require('../sprites/drag.js')
     ],
     one: {
@@ -15,9 +24,9 @@ module.exports = $.Screen({
         }
     }
 }).extend({
-    draw: function (ctx) {
+    draw: function (ctx, debug) {
         ctx.fillStyle = '#fafafa';
         ctx.fillRect(0, 0, $.canvas.width, $.canvas.height);
-        this.base.draw(ctx);
+        this.base.draw(ctx, debug);
     }
 });
