@@ -14,9 +14,13 @@ module.exports = $.Screen({
             )
         }),
         Static({
-            pos: $.Point(300, 200)
+            pos: $.Point(
+                $.canvas.width / 2 - 32 + 90,
+                $.canvas.height / 2 - 32 + 50
+            )
         }),
-        require('../sprites/drag.js')
+        require('../sprites/drag.js'),
+        require('../sprites/label.js')
     ],
     one: {
         ready: function () {

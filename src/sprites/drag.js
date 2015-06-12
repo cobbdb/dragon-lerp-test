@@ -1,4 +1,5 @@
-var $ = require('dragonjs');
+var $ = require('dragonjs'),
+    label = require('./label.js');
 
 module.exports = $.Sprite({
     name: 'drag',
@@ -9,7 +10,7 @@ module.exports = $.Sprite({
         require('../collisions/lerp.js')
     ],
     mask: $.Rectangle(
-        $.Point(),
+        $.Point(10, 5),
         $.Dimension(32, 32)
     ),
     strips: {
@@ -35,6 +36,7 @@ module.exports = $.Sprite({
     update: function () {
         var offset;
         if (this.dragging && $.Mouse.is.down) {
+            label.stop();
             offset = $.Mouse.offset;
             this.move(
                 offset.x - this.size.width / 2,

@@ -415,7 +415,7 @@ module.exports = function (opts) {
     };
 };
 
-},{"./dimension.js":19,"./log.js":30,"./point.js":35}],9:[function(require,module,exports){
+},{"./dimension.js":19,"./log.js":31,"./point.js":36}],9:[function(require,module,exports){
 /**
  * @param {String} opts.src
  * @param {Boolean} [opts.loop] Defaults to false.
@@ -562,7 +562,7 @@ module.exports = function (pos, rad) {
     });
 };
 
-},{"./dimension.js":19,"./point.js":35,"./shape.js":40,"./vector.js":49}],12:[function(require,module,exports){
+},{"./dimension.js":19,"./point.js":36,"./shape.js":41,"./vector.js":50}],12:[function(require,module,exports){
 var BaseClass = require('baseclassjs'),
     Sprite = require('./sprite.js');
 
@@ -597,12 +597,18 @@ module.exports = function (opts) {
     });
 };
 
-},{"./sprite.js":42,"baseclassjs":2}],13:[function(require,module,exports){
+},{"./sprite.js":43,"baseclassjs":2}],13:[function(require,module,exports){
 var Item = require('./item.js');
 
-module.exports = function () {
+/**
+ * # Collection
+ * Item Collections are sets of Items with methods for
+ * for manipulating Items.
+ * @return {Collection}
+ */
+module.exports = function (opts) {
     var removed = false;
-    return Item().extend({
+    return Item(opts).extend({
         name: 'dragon-collection',
         set: [],
         map: {},
@@ -672,9 +678,8 @@ module.exports = function () {
     });
 };
 
-},{"./item.js":28}],14:[function(require,module,exports){
+},{"./item.js":29}],14:[function(require,module,exports){
 var Counter = require('./id-counter.js'),
-    EventHandler = require('./event-handler.js'),
     Rectangle = require('./rectangle.js'),
     Point = require('./point.js'),
     Item = require('./item.js');
@@ -709,7 +714,7 @@ module.exports = function (opts) {
         }
     };
 
-    return Item().extend({
+    return Item(opts).extend({
         id: Counter.nextId,
         name: opts.name || 'dragon-collidable',
         solid: opts.solid || false,
@@ -717,10 +722,7 @@ module.exports = function (opts) {
         offset: opts.offset || Point(),
         move: function (pos) {
             var curPos = this.mask.pos(),
-                newPos = Point(
-                    pos.x + this.offset.x,
-                    pos.y + this.offset.y
-                );
+                newPos = pos.clone().shift(this.offset);
             if (!newPos.equals(curPos)) {
                 lastPos = curPos;
                 this.mask.move(
@@ -762,15 +764,10 @@ module.exports = function (opts) {
                 already = collisionsThisFrame[id];
             return !self && !already;
         }
-    }).implement(
-        EventHandler({
-            events: opts.on,
-            singles: opts.one
-        })
-    );
+    });
 };
 
-},{"./event-handler.js":22,"./id-counter.js":26,"./item.js":28,"./point.js":35,"./rectangle.js":38}],15:[function(require,module,exports){
+},{"./id-counter.js":25,"./item.js":29,"./point.js":36,"./rectangle.js":39}],15:[function(require,module,exports){
 /**
  * @param {String} opts.name
  */
@@ -840,6 +837,7 @@ var Game = require('./game.js'),
     Util = require('./util.js');
 
 module.exports = {
+    // Classes
     Shape: require('./shape.js'),
     Circle: require('./circle.js'),
     Rectangle: require('./rectangle.js'),
@@ -859,7 +857,6 @@ module.exports = {
     Mouse: require('./mouse.js'),
     Keyboard: require('./keyboard.js'),
 
-    EventHandler: require('./event-handler.js'),
     SpriteSheet: require('./spritesheet.js'),
     AnimationStrip: require('./animation-strip.js'),
     Audio: require('./audio.js'),
@@ -880,15 +877,20 @@ module.exports = {
     Sprite: require('./sprite.js'),
     ClearSprite: require('./clear-sprite.js'),
 
+    // UI Builtins
     ui: {
         Slider: require('./ui/slider.js'),
         Button: require('./ui/button.js'),
         Label: require('./ui/label.js'),
         Decal: require('./ui/decal.js')
-    }
+    },
+
+    // Interfaces
+    fadeable: require('./interfaces/fadeable.js'),
+    Eventable: require('./interfaces/eventable.js')
 };
 
-},{"./animation-strip.js":8,"./audio.js":9,"./canvas.js":10,"./circle.js":11,"./clear-sprite.js":12,"./collidable.js":14,"./collision-handler.js":15,"./dimension.js":19,"./dragon-collisions.js":20,"./event-handler.js":22,"./font.js":23,"./frame-counter.js":24,"./game.js":25,"./id-counter.js":26,"./keyboard.js":29,"./mouse.js":34,"./point.js":35,"./polar.js":36,"./random.js":37,"./rectangle.js":38,"./screen.js":39,"./shape.js":40,"./sprite.js":42,"./spritesheet.js":43,"./ui/button.js":44,"./ui/decal.js":45,"./ui/label.js":46,"./ui/slider.js":47,"./util.js":48,"./vector.js":49}],17:[function(require,module,exports){
+},{"./animation-strip.js":8,"./audio.js":9,"./canvas.js":10,"./circle.js":11,"./clear-sprite.js":12,"./collidable.js":14,"./collision-handler.js":15,"./dimension.js":19,"./dragon-collisions.js":20,"./font.js":22,"./frame-counter.js":23,"./game.js":24,"./id-counter.js":25,"./interfaces/eventable.js":27,"./interfaces/fadeable.js":28,"./keyboard.js":30,"./mouse.js":35,"./point.js":36,"./polar.js":37,"./random.js":38,"./rectangle.js":39,"./screen.js":40,"./shape.js":41,"./sprite.js":43,"./spritesheet.js":44,"./ui/button.js":45,"./ui/decal.js":46,"./ui/label.js":47,"./ui/slider.js":48,"./util.js":49,"./vector.js":50}],17:[function(require,module,exports){
 module.exports = {
     show: {
         fps: function () {}
@@ -902,6 +904,12 @@ module.exports = {
 module.exports = 'ontouchstart' in window;
 
 },{}],19:[function(require,module,exports){
+/**
+ * # Dimension
+ * @param {Number} w
+ * @param {Number} h
+ * @return {Dimension}
+ */
 function Dimension(w, h) {
     return {
         width: w || 0,
@@ -915,11 +923,28 @@ function Dimension(w, h) {
                 this.height === other.height
             );
         },
-        scale: function (scale) {
-            return Dimension(
-                this.width * scale,
-                this.height * scale
-            );
+        /**
+         * @param {Dimension} scale
+         */
+        multiply: function (scale) {
+            this.width *= scale.width;
+            this.height *= scale.height;
+            return this;
+        },
+        divide: function (scale) {
+            this.width /= scale.width;
+            this.height /= scale.height;
+            return this;
+        },
+        add: function (scale) {
+            this.width += scale.width;
+            this.height += scale.height;
+            return this;
+        },
+        subtract: function (scale) {
+            this.width -= scale.width;
+            this.height -= scale.height;
+            return this;
         }
     };
 }
@@ -981,60 +1006,7 @@ module.exports = Collection().add([
     })
 ]);
 
-},{"./canvas.js":10,"./collection.js":13,"./collidable.js":14,"./dimension.js":19,"./dragon-collisions.js":20,"./mask-screendrag.js":31,"./mask-screenhold.js":32,"./mask-screentap.js":33,"./point.js":35,"./rectangle.js":38}],22:[function(require,module,exports){
-var BaseClass = require('baseclassjs');
-
-/**
- * @param {Object} [opts.events]
- * @param {Object} [opts.singles]
- */
-module.exports = function (opts) {
-    var events = {},
-        singles = {},
-        name;
-
-    opts = opts || {};
-    for (name in opts.events) {
-        events[name] = [
-            opts.events[name]
-        ];
-    }
-    for (name in opts.singles) {
-        singles[name] = [
-            opts.singles[name]
-        ];
-    }
-
-    return BaseClass.Interface({
-        on: function (name, cb) {
-            events[name] = events[name] || [];
-            events[name].push(cb);
-        },
-        one: function (name, cb) {
-            singles[name] = singles[name] || [];
-            singles[name].push(cb);
-        },
-        off: function (name) {
-            events[name] = [];
-            singles[name] = [];
-        },
-        trigger: function (name, data) {
-            if (name in events) {
-                events[name].forEach(function (cb) {
-                    cb.call(this, data);
-                }, this);
-            }
-            if (name in singles) {
-                singles[name].forEach(function (cb) {
-                    cb.call(this, data);
-                }, this);
-                singles[name] = [];
-            }
-        }
-    });
-};
-
-},{"baseclassjs":2}],23:[function(require,module,exports){
+},{"./canvas.js":10,"./collection.js":13,"./collidable.js":14,"./dimension.js":19,"./dragon-collisions.js":20,"./mask-screendrag.js":32,"./mask-screenhold.js":33,"./mask-screentap.js":34,"./point.js":36,"./rectangle.js":39}],22:[function(require,module,exports){
 var str = require('curb'),
     tpl = "@font-face{font-family:'%s';font-style:%s;font-weight:%s;src:url(assets/fonts/%s);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02C6,U+02DA,U+02DC,U+2000-206F,U+2074,U+20AC,U+2212,U+2215,U+E0FF,U+EFFD,U+F000}",
     cache = {};
@@ -1062,7 +1034,7 @@ module.exports = {
     }
 };
 
-},{"curb":6}],24:[function(require,module,exports){
+},{"curb":6}],23:[function(require,module,exports){
 var timeSinceLastSecond = frameCountThisSecond = frameRate = 0,
     timeLastFrame = Date.now();
 
@@ -1091,7 +1063,7 @@ module.exports = {
     }
 };
 
-},{}],25:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 var Point = require('./point.js'),
     Circle = require('./circle.js'),
     Collidable = require('./collidable.js'),
@@ -1238,7 +1210,7 @@ module.exports = {
     }
 };
 
-},{"./canvas.js":10,"./circle.js":11,"./collidable.js":14,"./debug-console.js":17,"./dragon-collisions.js":20,"./dragon-masks.js":21,"./frame-counter.js":24,"./id-counter.js":26,"./mouse.js":34,"./point.js":35}],26:[function(require,module,exports){
+},{"./canvas.js":10,"./circle.js":11,"./collidable.js":14,"./debug-console.js":17,"./dragon-collisions.js":20,"./dragon-masks.js":21,"./frame-counter.js":23,"./id-counter.js":25,"./mouse.js":35,"./point.js":36}],25:[function(require,module,exports){
 var counter = 0;
 
 module.exports = {
@@ -1251,7 +1223,7 @@ module.exports = {
     }
 };
 
-},{}],27:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 module.exports = function (src) {
     var img = new Image();
     img.ready = false;
@@ -1286,11 +1258,83 @@ module.exports = function (src) {
     return img;
 };
 
-},{}],28:[function(require,module,exports){
-var BaseClass = require('baseclassjs'),
-    Eventable = require('./event-handler.js');
+},{}],27:[function(require,module,exports){
+var BaseClass = require('baseclassjs');
 
-module.exports = function () {
+/**
+ * @param {Object} [opts.events]
+ * @param {Object} [opts.singles]
+ */
+module.exports = function (opts) {
+    var events = {},
+        singles = {},
+        name;
+
+    opts = opts || {};
+    for (name in opts.events) {
+        events[name] = [
+            opts.events[name]
+        ];
+    }
+    for (name in opts.singles) {
+        singles[name] = [
+            opts.singles[name]
+        ];
+    }
+
+    return BaseClass.Interface({
+        on: function (name, cb) {
+            events[name] = events[name] || [];
+            events[name].push(cb);
+        },
+        one: function (name, cb) {
+            singles[name] = singles[name] || [];
+            singles[name].push(cb);
+        },
+        off: function (name) {
+            events[name] = [];
+            singles[name] = [];
+        },
+        trigger: function (name, data) {
+            if (name in events) {
+                events[name].forEach(function (cb) {
+                    cb.call(this, data);
+                }, this);
+            }
+            if (name in singles) {
+                singles[name].forEach(function (cb) {
+                    cb.call(this, data);
+                }, this);
+                singles[name] = [];
+            }
+        }
+    });
+};
+
+},{"baseclassjs":2}],28:[function(require,module,exports){
+var BaseClass = require('baseclassjs');
+
+module.exports = BaseClass.Interface({
+    fadeIn: function () {},
+    fadeOut: function () {}
+});
+
+},{"baseclassjs":2}],29:[function(require,module,exports){
+var BaseClass = require('baseclassjs'),
+    Eventable = require('./interfaces/eventable.js');
+
+/**
+ * # Collection Item
+ * Item is the most basic contract in the Dragon game engine. Almost
+ * everything in the engine is derived from Item - including Sprites
+ * and Screens.
+ * @param {Map Of Functions} [opts.on] Dictionary of events.
+ * @param {Map of Functions} [opts.one] Dictionary of one-time events.
+ * @return {Item}
+ */
+module.exports = function (opts) {
+    opts = opts || {};
+
     return BaseClass({
         name: 'dragon-item',
         depth: 0,
@@ -1300,11 +1344,14 @@ module.exports = function () {
         draw: BaseClass.Abstract,
         teardown: BaseClass.Abstract
     }).implement(
-        Eventable()
+        Eventable({
+            events: opts.on,
+            singles: opts.one
+        })
     );
 };
 
-},{"./event-handler.js":22,"baseclassjs":2}],29:[function(require,module,exports){
+},{"./interfaces/eventable.js":27,"baseclassjs":2}],30:[function(require,module,exports){
 var nameMap = {
         alt: false,
         ctrl: false,
@@ -1373,12 +1420,12 @@ module.exports = {
     }
 };
 
-},{}],30:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 var Lumberjack = require('lumberjackjs');
 
 module.exports = Lumberjack();
 
-},{"lumberjackjs":7}],31:[function(require,module,exports){
+},{"lumberjackjs":7}],32:[function(require,module,exports){
 var Collidable = require('./collidable.js'),
     Circle = require('./circle.js'),
     Point = require('./point.js'),
@@ -1402,7 +1449,7 @@ module.exports = Collidable({
     }
 });
 
-},{"./circle.js":11,"./collidable.js":14,"./dragon-collisions.js":20,"./mouse.js":34,"./point.js":35}],32:[function(require,module,exports){
+},{"./circle.js":11,"./collidable.js":14,"./dragon-collisions.js":20,"./mouse.js":35,"./point.js":36}],33:[function(require,module,exports){
 var Collidable = require('./collidable.js'),
     Circle = require('./circle.js'),
     Point = require('./point.js'),
@@ -1426,7 +1473,7 @@ module.exports = Collidable({
     }
 });
 
-},{"./circle.js":11,"./collidable.js":14,"./dragon-collisions.js":20,"./mouse.js":34,"./point.js":35}],33:[function(require,module,exports){
+},{"./circle.js":11,"./collidable.js":14,"./dragon-collisions.js":20,"./mouse.js":35,"./point.js":36}],34:[function(require,module,exports){
 var Collidable = require('./collidable.js'),
     Circle = require('./circle.js'),
     Point = require('./point.js'),
@@ -1456,7 +1503,7 @@ module.exports = Collidable({
     }
 });
 
-},{"./circle.js":11,"./collidable.js":14,"./dragon-collisions.js":20,"./mouse.js":34,"./point.js":35}],34:[function(require,module,exports){
+},{"./circle.js":11,"./collidable.js":14,"./dragon-collisions.js":20,"./mouse.js":35,"./point.js":36}],35:[function(require,module,exports){
 (function (global){
 var Point = require('./point.js'),
     Vector = require('./vector.js'),
@@ -1557,8 +1604,8 @@ module.exports = {
                 cb.bind(thisArg)
             );
         },
-        click: function (cb) {},
-        dclick: function (cb) {},
+        click: function (cb, thisArg) {},
+        dclick: function (cb, thisArg) {},
         up: function (cb, thisArg) {
             document.addEventListener(
                 endEventName,
@@ -1570,7 +1617,20 @@ module.exports = {
                 moveEventName,
                 cb.bind(thisArg)
             );
-        }
+        },
+        drag: function (cb, thisArg) {
+            canvas.addEventListener(moveEventName, function () {
+                if (isDragging) {
+                    cb.call(thisArg);
+                }
+            });
+        },
+        /**
+         * @param {String} dir Swipe direction.
+         * @param {Function cb
+         * @param {Any} thisArg
+         */
+        swipe: function (dir, cb, thisArg) {}
     },
     eventName: {
         start: startEventName,
@@ -1580,7 +1640,13 @@ module.exports = {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./canvas.js":10,"./point.js":35,"./vector.js":49}],35:[function(require,module,exports){
+},{"./canvas.js":10,"./point.js":36,"./vector.js":50}],36:[function(require,module,exports){
+/**
+ * # Point
+ * @param {Number} x
+ * @param {Number} y
+ * @return {Point}
+ */
 function Point(x, y) {
     return {
         x: x || 0,
@@ -1624,9 +1690,7 @@ function Point(x, y) {
 
 module.exports = Point;
 
-},{}],36:[function(require,module,exports){
-var Vector = require('./vector.js');
-
+},{}],37:[function(require,module,exports){
 function isEqual(my, other, tfactor, mfactor) {
     var mag = my.magnitude === mfactor * other.magnitude,
         mytheta = (my.theta % Math.PI).toFixed(5),
@@ -1655,6 +1719,7 @@ function Polar(theta, mag) {
             );
         },
         toVector: function () {
+            var Vector = require('./vector.js');
             return Vector(
                 this.magnitude * Math.cos(this.theta),
                 this.magnitude * Math.sin(this.theta)
@@ -1671,7 +1736,7 @@ function Polar(theta, mag) {
 
 module.exports = Polar;
 
-},{"./vector.js":49}],37:[function(require,module,exports){
+},{"./vector.js":50}],38:[function(require,module,exports){
 (function (global){
 var i,
     len = 50,
@@ -1695,7 +1760,7 @@ module.exports = function () {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],38:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 var Shape = require('./shape.js'),
     Point = require('./point.js'),
     Dimension = require('./dimension.js'),
@@ -1768,25 +1833,26 @@ module.exports = function (pos, size) {
     });
 };
 
-},{"./dimension.js":19,"./point.js":35,"./shape.js":40,"./vector.js":49}],39:[function(require,module,exports){
+},{"./dimension.js":19,"./point.js":36,"./shape.js":41,"./vector.js":50}],40:[function(require,module,exports){
 var BaseClass = require('baseclassjs'),
-    EventHandler = require('./event-handler.js'),
     Counter = require('./id-counter.js'),
     SpriteSet = require('./sprite-set.js');
 
 /**
+ * # Screen
  * @param {Array|Sprite} [opts.spriteSet]
  * @param {Array|CollisionHandler} [opts.collisionSets]
  * @param {String} opts.name
  * @param {Number} [opts.depth] Defaults to 0.
  * @param {Object} [opts.on] Dictionary of events.
  * @param {Object} [opts.one] Dictionary of one-time events.
+ * @return {Screen}
  */
 module.exports = function (opts) {
     var loaded = false,
         collisionMap = {};
 
-    return SpriteSet().extend({
+    return SpriteSet(opts).extend({
         name: opts.name,
         updating: false,
         drawing: false,
@@ -1893,15 +1959,10 @@ module.exports = function (opts) {
                 collisionMap[i].teardown();
             }
         }
-    }).implement(
-        EventHandler({
-            events: opts.on,
-            singles: opts.one
-        })
-    );
+    });
 };
 
-},{"./event-handler.js":22,"./id-counter.js":26,"./sprite-set.js":41,"baseclassjs":2}],40:[function(require,module,exports){
+},{"./id-counter.js":25,"./sprite-set.js":42,"baseclassjs":2}],41:[function(require,module,exports){
 var BaseClass = require('baseclassjs'),
     Point = require('./point.js');
 
@@ -1932,15 +1993,20 @@ module.exports = function (opts) {
     });
 };
 
-},{"./point.js":35,"baseclassjs":2}],41:[function(require,module,exports){
+},{"./point.js":36,"baseclassjs":2}],42:[function(require,module,exports){
 var Counter = require('./id-counter.js'),
     Collection = require('./collection.js');
 
-module.exports = function () {
+/**
+ * # Sprite Set
+ * Item Collection specifically for handing Sprites.
+ * @return {SpriteSet}
+ */
+module.exports = function (opts) {
     var spritesToAdd = [],
         loadQueue = {};
 
-    return Collection().extend({
+    return Collection(opts).extend({
         add: function (opts) {
             var id, onload, set, addQueue,
                 thatbase = this.base;
@@ -1981,13 +2047,14 @@ module.exports = function () {
     });
 };
 
-},{"./collection.js":13,"./id-counter.js":26}],42:[function(require,module,exports){
+},{"./collection.js":13,"./id-counter.js":25}],43:[function(require,module,exports){
 (function (global){
 var BaseClass = require('baseclassjs'),
     Collidable = require('./collidable.js'),
     Point = require('./point.js'),
     Dimension = require('./dimension.js'),
-    Rectangle = require('./rectangle.js');
+    Rectangle = require('./rectangle.js'),
+    Util = require('./util.js');
 
 /**
  * ##### Sprite
@@ -2018,10 +2085,14 @@ module.exports = function (opts) {
         stripMap = opts.strips || {},
         pos = opts.pos || Point();
 
-    opts.name = opts.name || 'dragon-sprite';
-    opts.startingStrip = (
-        opts.startingStrip || global.Object.keys(stripMap)[0]
-    );
+    Util.mergeDefaults(opts, {
+        name: 'dragon-sprite',
+        startingStrip: opts.startingStrip || global.Object.keys(stripMap)[0],
+        one: {}
+    });
+    opts.one.ready = opts.one.ready || function () {
+        this.start();
+    };
 
     if (!opts.freemask) {
         opts.mask = opts.mask || Rectangle();
@@ -2034,10 +2105,6 @@ module.exports = function (opts) {
             pos.y + opts.offset.y
         );
     }
-    opts.one = opts.one || {};
-    opts.one.ready = opts.one.ready || function () {
-        this.start();
-    };
 
     return Collidable(opts).extend({
         strip: stripMap[opts.startingStrip],
@@ -2140,7 +2207,7 @@ module.exports = function (opts) {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./collidable.js":14,"./dimension.js":19,"./point.js":35,"./rectangle.js":38,"baseclassjs":2}],43:[function(require,module,exports){
+},{"./collidable.js":14,"./dimension.js":19,"./point.js":36,"./rectangle.js":39,"./util.js":49,"baseclassjs":2}],44:[function(require,module,exports){
 var createImage = require('./image.js'),
     cache = {};
 
@@ -2165,7 +2232,7 @@ module.exports = function (opts) {
     return img;
 };
 
-},{"./image.js":27}],44:[function(require,module,exports){
+},{"./image.js":26}],45:[function(require,module,exports){
 var Sprite = require('../sprite.js'),
     Dimension = require('../dimension.js'),
     Rectangle = require('../rectangle.js'),
@@ -2230,7 +2297,7 @@ module.exports = function (opts) {
     });
 };
 
-},{"../animation-strip.js":8,"../dimension.js":19,"../dragon-collisions.js":20,"../point.js":35,"../rectangle.js":38,"../sprite.js":42,"../spritesheet.js":43}],45:[function(require,module,exports){
+},{"../animation-strip.js":8,"../dimension.js":19,"../dragon-collisions.js":20,"../point.js":36,"../rectangle.js":39,"../sprite.js":43,"../spritesheet.js":44}],46:[function(require,module,exports){
 var Sprite = require('../sprite.js'),
     AnimationStrip = require('../animation-strip.js'),
     SpriteSheet = require('../spritesheet.js');
@@ -2261,7 +2328,7 @@ module.exports = function (opts) {
     return Sprite(opts);
 };
 
-},{"../animation-strip.js":8,"../sprite.js":42,"../spritesheet.js":43}],46:[function(require,module,exports){
+},{"../animation-strip.js":8,"../sprite.js":43,"../spritesheet.js":44}],47:[function(require,module,exports){
 var ClearSprite = require('../clear-sprite.js');
 
 /**
@@ -2270,6 +2337,7 @@ var ClearSprite = require('../clear-sprite.js');
  * Labels do not have collision logic nor are they displayed
  * from image assets. Labels instead contain only text.
  * @param {String} opts.text
+ * @param {Number} [opts.depth]
  * @param {Function} [opts.style]
  * @param {Point} opts.pos
  * @param {String} [opts.name] Defaults to `dragon-ui-label`.
@@ -2291,7 +2359,7 @@ module.exports = function (opts) {
     });
 };
 
-},{"../clear-sprite.js":12}],47:[function(require,module,exports){
+},{"../clear-sprite.js":12}],48:[function(require,module,exports){
 var Sprite = require('../sprite.js'),
     Dimension = require('../dimension.js'),
     Rectangle = require('../rectangle.js'),
@@ -2434,7 +2502,7 @@ module.exports = function (opts) {
     });
 };
 
-},{"../animation-strip.js":8,"../clear-sprite.js":12,"../dimension.js":19,"../dragon-collisions.js":20,"../point.js":35,"../rectangle.js":38,"../sprite.js":42,"../spritesheet.js":43}],48:[function(require,module,exports){
+},{"../animation-strip.js":8,"../clear-sprite.js":12,"../dimension.js":19,"../dragon-collisions.js":20,"../point.js":36,"../rectangle.js":39,"../sprite.js":43,"../spritesheet.js":44}],49:[function(require,module,exports){
 var random = require('./random.js');
 
 module.exports = {
@@ -2477,7 +2545,7 @@ module.exports = {
             root[key] = other[key];
         }
     },
-    mergeDefault: function (root, other) {
+    mergeDefaults: function (root, other) {
         var key;
         for (key in other) {
             if (!(key in root)) {
@@ -2487,9 +2555,7 @@ module.exports = {
     }
 };
 
-},{"./random.js":37}],49:[function(require,module,exports){
-var Polar = require('./polar.js');
-
+},{"./random.js":38}],50:[function(require,module,exports){
 /**
  * @param {Number} [x] Defaults to 0.
  * @param {Number} [y] Defaults to 0.
@@ -2518,31 +2584,49 @@ function Vector(x, y) {
                 this.y === other.y
             );
         },
-        scale: function (scale) {
-            return Vector(
-                this.x * scale,
-                this.y * scale
-            );
-        },
         toPolar: function () {
+            var Polar = require('./polar.js');
             return Polar(
                 Math.atan(this.y / this.x),
                 this.magnitude
             );
+        },
+        /**
+         * @param {Vector} scale
+         */
+        multiply: function (scale) {
+            this.x *= scale.x;
+            this.y *= scale.y;
+            return this;
+        },
+        divide: function (scale) {
+            this.x /= scale.x;
+            this.y /= scale.y;
+            return this;
+        },
+        add: function (scale) {
+            this.x += scale.x;
+            this.y += scale.y;
+            return this;
+        },
+        subtract: function (scale) {
+            this.x -= scale.x;
+            this.y -= scale.y;
+            return this;
         }
     };
 }
 
 module.exports = Vector;
 
-},{"./polar.js":36}],50:[function(require,module,exports){
+},{"./polar.js":37}],51:[function(require,module,exports){
 var $ = require('dragonjs');
 
 module.exports = $.CollisionHandler({
     name: 'lerp'
 });
 
-},{"dragonjs":16}],51:[function(require,module,exports){
+},{"dragonjs":16}],52:[function(require,module,exports){
 var $ = require('dragonjs');
 
 $.addScreens([
@@ -2550,7 +2634,7 @@ $.addScreens([
 ]);
 $.run(true);
 
-},{"./screens/lerp.js":52,"dragonjs":16}],52:[function(require,module,exports){
+},{"./screens/lerp.js":53,"dragonjs":16}],53:[function(require,module,exports){
 var $ = require('dragonjs'),
     Static = require('../sprites/static.js');
 
@@ -2567,9 +2651,13 @@ module.exports = $.Screen({
             )
         }),
         Static({
-            pos: $.Point(300, 200)
+            pos: $.Point(
+                $.canvas.width / 2 - 32 + 90,
+                $.canvas.height / 2 - 32 + 50
+            )
         }),
-        require('../sprites/drag.js')
+        require('../sprites/drag.js'),
+        require('../sprites/label.js')
     ],
     one: {
         ready: function () {
@@ -2584,8 +2672,9 @@ module.exports = $.Screen({
     }
 });
 
-},{"../collisions/lerp.js":50,"../sprites/drag.js":53,"../sprites/static.js":54,"dragonjs":16}],53:[function(require,module,exports){
-var $ = require('dragonjs');
+},{"../collisions/lerp.js":51,"../sprites/drag.js":54,"../sprites/label.js":55,"../sprites/static.js":56,"dragonjs":16}],54:[function(require,module,exports){
+var $ = require('dragonjs'),
+    label = require('./label.js');
 
 module.exports = $.Sprite({
     name: 'drag',
@@ -2596,7 +2685,7 @@ module.exports = $.Sprite({
         require('../collisions/lerp.js')
     ],
     mask: $.Rectangle(
-        $.Point(),
+        $.Point(10, 5),
         $.Dimension(32, 32)
     ),
     strips: {
@@ -2622,6 +2711,7 @@ module.exports = $.Sprite({
     update: function () {
         var offset;
         if (this.dragging && $.Mouse.is.down) {
+            label.stop();
             offset = $.Mouse.offset;
             this.move(
                 offset.x - this.size.width / 2,
@@ -2632,13 +2722,27 @@ module.exports = $.Sprite({
     }
 });
 
-},{"../collisions/lerp.js":50,"dragonjs":16}],54:[function(require,module,exports){
+},{"../collisions/lerp.js":51,"./label.js":55,"dragonjs":16}],55:[function(require,module,exports){
+var $ = require('dragonjs');
+
+module.exports = $.ui.Label({
+    text: '< drag me!',
+    pos: $.Point(60, 20),
+    style: function (ctx) {
+        ctx.font = '24px Comic Sans MS';
+        ctx.textBaseline = 'top';
+        ctx.textAlign = 'left';
+        ctx.fillStyle = '#666';
+    }
+});
+
+},{"dragonjs":16}],56:[function(require,module,exports){
 var $ = require('dragonjs');
 
 module.exports = function (opts) {
     return $.Sprite({
         name: 'static',
-        solid: false,
+        solid: true,
         collisionSets: [
             require('../collisions/lerp.js')
         ],
@@ -2657,4 +2761,4 @@ module.exports = function (opts) {
     });
 };
 
-},{"../collisions/lerp.js":50,"dragonjs":16}]},{},[51]);
+},{"../collisions/lerp.js":51,"dragonjs":16}]},{},[52]);
