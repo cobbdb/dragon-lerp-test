@@ -542,13 +542,16 @@ module.exports = function (pos, rad) {
             ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
             ctx.stroke();
         },
-        move: function (x, y) {
-            this.x = x;
-            this.y = y;
-            this.top = y - this.radius;
-            this.right = x + this.radius;
-            this.bottom = y + this.radius;
-            this.left = x - this.radius;
+        /**
+         * @param {Point} pos
+         */
+        move: function (pos) {
+            this.x = pos.x;
+            this.y = pos.y;
+            this.top = pos.y - this.radius;
+            this.right = pos.x + this.radius;
+            this.bottom = pos.y + this.radius;
+            this.left = pos.x - this.radius;
         },
         resize: function (rad) {
             this.radius = rad;
@@ -720,15 +723,16 @@ module.exports = function (opts) {
         solid: opts.solid || false,
         mask: opts.mask || Rectangle(),
         offset: opts.offset || Point(),
+        /**
+         * Move the mask.
+         * @param {Point} pos Point to move mask to.
+         */
         move: function (pos) {
             var curPos = this.mask.pos(),
-                newPos = pos.clone().shift(this.offset);
+                newPos = pos.add(this.offset);
             if (!newPos.equals(curPos)) {
-                lastPos = curPos;
-                this.mask.move(
-                    newPos.x,
-                    newPos.y
-                );
+                lastPos = curPos.subtract(this.offset);
+                this.mask.move(newPos);
             }
         },
         intersects: function (mask) {
@@ -925,26 +929,32 @@ function Dimension(w, h) {
         },
         /**
          * @param {Dimension} scale
+         * @param {Boolean} [shallow] True to mutate.
+         * @return {Dimension}
          */
-        multiply: function (scale) {
-            this.width *= scale.width;
-            this.height *= scale.height;
-            return this;
+        multiply: function (scale, shallow) {
+            var target = shallow ? this : this.clone();
+            target.width *= scale.width;
+            target.height *= scale.height;
+            return target;
         },
-        divide: function (scale) {
-            this.width /= scale.width;
-            this.height /= scale.height;
-            return this;
+        divide: function (scale, shallow) {
+            var target = shallow ? this : this.clone();
+            target.width /= scale.width;
+            target.height /= scale.height;
+            return target;
         },
-        add: function (scale) {
-            this.width += scale.width;
-            this.height += scale.height;
-            return this;
+        add: function (scale, shallow) {
+            var target = shallow ? this : this.clone();
+            target.width += scale.width;
+            target.height += scale.height;
+            return target;
         },
-        subtract: function (scale) {
-            this.width -= scale.width;
-            this.height -= scale.height;
-            return this;
+        subtract: function (scale, shallow) {
+            var target = shallow ? this : this.clone();
+            target.width -= scale.width;
+            target.height -= scale.height;
+            return target;
         }
     };
 }
@@ -1668,22 +1678,44 @@ function Point(x, y) {
             );
         },
         /**
-         * @param {Point} offset
-         * @return {Point} This point after shifting.
-         */
-        shift: function (offset) {
-            this.x += offset.x;
-            this.y += offset.y;
-            return this;
-        },
-        /**
          * @param {Point} pos
+         * @param {Boolean} [shallow] True to mutate.
          * @return {Point} This point after moving.
          */
-        move: function (pos) {
-            this.x = pos.x;
-            this.y = pos.y;
-            return this;
+        move: function (pos, shallow) {
+            var target = shallow ? this : this.clone();
+            target.x = pos.x;
+            target.y = pos.y;
+            return target;
+        },
+        /**
+         * @param {Point} offset
+         * @param {Boolean} [shallow] True to mutate.
+         * @return {Point} This point after shifting.
+         */
+        multiply: function (scale, shallow) {
+            var target = shallow ? this : this.clone();
+            target.x *= scale.x;
+            target.y *= scale.y;
+            return target;
+        },
+        divide: function (scale, shallow) {
+            var target = shallow ? this : this.clone();
+            target.x /= scale.x;
+            target.y /= scale.y;
+            return target;
+        },
+        add: function (scale, shallow) {
+            var target = shallow ? this : this.clone();
+            target.x += scale.x;
+            target.y += scale.y;
+            return target;
+        },
+        subtract: function (scale, shallow) {
+            var target = shallow ? this : this.clone();
+            target.x -= scale.x;
+            target.y -= scale.y;
+            return target;
         }
     };
 }
@@ -1809,13 +1841,16 @@ module.exports = function (pos, size) {
         right: pos.x + size.width || 0,
         bottom: pos.y + size.height || 0,
         left: pos.x || 0,
-        move: function (x, y) {
-            this.x = x;
-            this.y = y;
-            this.top = y;
-            this.right = x + this.width;
-            this.bottom = y + this.height;
-            this.left = x;
+        /**
+         * @param {Point} pos
+         */
+        move: function (pos) {
+            this.x = pos.x;
+            this.y = pos.y;
+            this.top = pos.y;
+            this.right = pos.x + this.width;
+            this.bottom = pos.y + this.height;
+            this.left = pos.x;
         },
         resize: function (size) {
             this.width = size.width;
@@ -2088,6 +2123,7 @@ module.exports = function (opts) {
     Util.mergeDefaults(opts, {
         name: 'dragon-sprite',
         startingStrip: opts.startingStrip || global.Object.keys(stripMap)[0],
+        mask: Rectangle(),
         one: {}
     });
     opts.one.ready = opts.one.ready || function () {
@@ -2095,14 +2131,9 @@ module.exports = function (opts) {
     };
 
     if (!opts.freemask) {
-        opts.mask = opts.mask || Rectangle();
-        opts.offset = Point(
-            opts.mask.x,
-            opts.mask.y
-        );
+        opts.offset = opts.mask.pos();
         opts.mask.move(
-            pos.x + opts.offset.x,
-            pos.y + opts.offset.y
+            pos.add(opts.offset)
         );
     }
 
@@ -2189,6 +2220,11 @@ module.exports = function (opts) {
                 onload();
             }
         },
+        /**
+         * Move the Sprite and its mask unless freemask.
+         * @param {Number} x
+         * @param {Number} y
+         */
         move: function (x, y) {
             this.pos.x = x;
             this.pos.y = y;
