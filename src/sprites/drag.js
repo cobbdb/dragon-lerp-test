@@ -10,7 +10,7 @@ module.exports = $.Sprite({
         require('../collisions/lerp.js')
     ],
     mask: $.Rectangle(
-        $.Point(10, 5),
+        $.Point(),
         $.Dimension(32, 32)
     ),
     strips: {
