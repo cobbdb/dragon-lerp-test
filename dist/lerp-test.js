@@ -725,7 +725,7 @@ module.exports = function (opts) {
         offset: opts.offset || Point(),
         /**
          * Move the mask.
-         * @param {Point} pos Point to move mask to.
+         * @param {Point} pos
          */
         move: function (pos) {
             var curPos = this.mask.pos(),
