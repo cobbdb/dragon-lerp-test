@@ -751,18 +751,24 @@ module.exports = function (opts) {
             this.move(target);
         }
     };
-    opts.on['collide/screendrag'] = function () {
-        if (!this.dragging) {
-            this.dragging = true;
-            Mouse.on.up(function () {
-                this.dragging = false;
-            }, this);
+
+    // Provide easy way to track when dragged.
+    opts.on['collide/screendrag'] = [].concat(
+        opts.on['collide/screendrag'] || [],
+        function () {
+            if (!this.dragging) {
+                this.dragging = true;
+                Mouse.on.up(function () {
+                    this.dragging = false;
+                }, this);
+            }
         }
-    };
+    );
 
     return Item(opts).extend({
         id: Counter.nextId,
         name: opts.name || 'dragon-collidable',
+        dragging: false,
         solid: opts.solid || false,
         mask: opts.mask || Rectangle(),
         offset: opts.offset || Point(),
@@ -779,6 +785,9 @@ module.exports = function (opts) {
                 this.mask.move(newPos);
             }
         },
+        /**
+         * @param {Shape} mask
+         */
         intersects: function (mask) {
             return this.mask.intersects(mask);
         },
@@ -1532,14 +1541,14 @@ module.exports = function (opts) {
 
     opts = opts || {};
     for (name in opts.events) {
-        events[name] = [
+        events[name] = [].concat(
             opts.events[name]
-        ];
+        );
     }
     for (name in opts.singles) {
-        singles[name] = [
+        singles[name] = [].concat(
             opts.singles[name]
-        ];
+        );
     }
 
     return BaseClass.Interface({
@@ -2831,22 +2840,11 @@ module.exports = $.Sprite({
             })
         })
     },
-    pos: $.Point(20, 20),
-    on: {
-        'colliding/screendrag': function () {
-            if (!this.dragging) {
-                this.dragging = true;
-                $.Mouse.on.up(function () {
-                    this.dragging = false;
-                }, this);
-            }
-        }
-    }
+    pos: $.Point(20, 20)
 }).extend({
-    dragging: false,
     update: function () {
         var offset;
-        if (this.dragging && $.Mouse.is.down) {
+        if (this.dragging) {
             label.stop();
             offset = $.Mouse.offset;
             this.move($.Point(
