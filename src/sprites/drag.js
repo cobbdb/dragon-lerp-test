@@ -3,7 +3,7 @@ var $ = require('dragonjs'),
 
 module.exports = $.Sprite({
     name: 'drag',
-    solid: true,
+    solid: false,
     depth: 10,
     collisionSets: [
         $.collisions,
@@ -38,10 +38,10 @@ module.exports = $.Sprite({
         if (this.dragging && $.Mouse.is.down) {
             label.stop();
             offset = $.Mouse.offset;
-            this.move(
+            this.move($.Point(
                 offset.x - this.size.width / 2,
                 offset.y - this.size.height / 2
-            );
+            ));
         }
         this.base.update();
     }

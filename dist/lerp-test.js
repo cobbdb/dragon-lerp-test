@@ -707,13 +707,62 @@ module.exports = function (opts) {
         collisionSets = [].concat(opts.collisionSets);
     }
 
+    function classify(E) {
+        return {
+            x: (E.x > 0) ? 'right' : 'left',
+            y: (E.y > 0) ? 'down' : 'up'
+        };
+    }
+    function magnitude(clas, T, O) {
+        var a = Math.abs(T.bottom - O.top),
+            b = Math.abs(T.top - O.bottom),
+            c = Math.abs(T.right - O.left),
+            d = Math.abs(T.left - O.right);
+        return {
+            x1: (clas.x === 'right') ? c : d,
+            y1: (clas.y === 'down') ? a : b
+        };
+    }
+    function flush(f, p, s, m, T, O) {
+        var target = Point(),
+            b = T.y - m * T.x;
+        if (f) {
+            if (p) { // down
+                // theta
+                target.y = O.top - T.height;
+                target.x = (target.y - b) / m;
+            } else { // up
+                // beta
+                target.y = O.bottom;
+                target.x = (target.y - b) / m;
+            }
+        } else {
+            if (s) { // right
+                // phi
+                target.x = O.left - T.width;
+                target.y = m * target.x + b;
+            } else { // left
+                // eta
+                target.x = O.right;
+                target.y = m * target.x + b;
+            }
+        }
+        return target;
+    }
     opts.on = opts.on || {};
     opts.on['colliding/$/solid'] = function (other) {
         if (lastPos) {
-            this.move(
-                lastPos.x,
-                lastPos.y
-            );
+            var E = this.mask.pos().subtract(lastPos);
+            var m = E.y / E.x;
+            var clas = classify(E);
+            var mag = magnitude(clas, this.mask, other.mask);
+            var f = mag.y1 < mag.x1;
+            var p = clas.x === 'right';
+            var s = clas.y === 'down';
+            var T = this.mask;
+            var O = other.mask;
+            var target = flush(f, p, s, m, T, O);
+            this.move(target);
         }
     };
 
@@ -731,7 +780,8 @@ module.exports = function (opts) {
             var curPos = this.mask.pos(),
                 newPos = pos.add(this.offset);
             if (!newPos.equals(curPos)) {
-                lastPos = curPos.subtract(this.offset);
+                //lastPos = curPos.subtract(this.offset);
+                lastPos = curPos;
                 this.mask.move(newPos);
             }
         },
@@ -1691,7 +1741,7 @@ function Point(x, y) {
         /**
          * @param {Point} offset
          * @param {Boolean} [shallow] True to mutate.
-         * @return {Point} This point after shifting.
+         * @return {Point|Vector} This point after shifting.
          */
         multiply: function (scale, shallow) {
             var target = shallow ? this : this.clone();
@@ -2222,19 +2272,19 @@ module.exports = function (opts) {
         },
         /**
          * Move the Sprite and its mask unless freemask.
-         * @param {Number} x
-         * @param {Number} y
+         * @param {Point} pos
          */
-        move: function (x, y) {
-            this.pos.x = x;
-            this.pos.y = y;
+        move: function (pos) {
+            this.pos.move(pos, true);
             if (!opts.freemask) {
                 this.base.move(this.pos);
             }
         },
-        shift: function (vx, vy) {
-            this.pos.x += vx || this.speed.x;
-            this.pos.y += vy || this.speed.y;
+        /**
+         * @param {Point|Vector} offset
+         */
+        shift: function (offset) {
+            this.pos.add(offset || this.speed, true);
             if (!opts.freemask) {
                 this.base.move(this.pos);
             }
@@ -2714,7 +2764,7 @@ var $ = require('dragonjs'),
 
 module.exports = $.Sprite({
     name: 'drag',
-    solid: true,
+    solid: false,
     depth: 10,
     collisionSets: [
         $.collisions,
@@ -2749,10 +2799,10 @@ module.exports = $.Sprite({
         if (this.dragging && $.Mouse.is.down) {
             label.stop();
             offset = $.Mouse.offset;
-            this.move(
+            this.move($.Point(
                 offset.x - this.size.width / 2,
                 offset.y - this.size.height / 2
-            );
+            ));
         }
         this.base.update();
     }
