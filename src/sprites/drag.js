@@ -3,7 +3,7 @@ var $ = require('dragonjs'),
 
 module.exports = $.Sprite({
     name: 'drag',
-    solid: false,
+    solid: true,
     depth: 10,
     collisionSets: [
         $.collisions,

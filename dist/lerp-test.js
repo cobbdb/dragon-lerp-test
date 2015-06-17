@@ -685,13 +685,9 @@ var Counter = require('./util/id-counter.js'),
 module.exports = function (opts) {
     var activeCollisions = {},
         collisionsThisFrame = {},
-        collisionSets = [],
         updated = false,
-        lastPos;
-
-    if (opts.collisionSets) {
-        collisionSets = [].concat(opts.collisionSets);
-    }
+        lastPos,
+        collisionSets = [].concat(opts.collisionSets || []);
 
     function classify(E) {
         return {
@@ -2055,14 +2051,14 @@ module.exports = CollisionItem({
 var SpriteSet = require('./sprite-set.js');
 
 /**
- * # Screen
+ * @class Screen
+ * @extends SpriteSet
  * @param {Array|Sprite} [opts.spriteSet]
  * @param {Array|CollisionHandler} [opts.collisionSets]
  * @param {String} opts.name
  * @param {Number} [opts.depth] Defaults to 0.
  * @param {Object} [opts.on] Dictionary of events.
  * @param {Object} [opts.one] Dictionary of one-time events.
- * @return {Screen}
  */
 module.exports = function (opts) {
     var loaded = false,
@@ -2183,9 +2179,9 @@ var Counter = require('./util/id-counter.js'),
     Collection = require('./collection.js');
 
 /**
- * # Sprite Set
+ * @class SpriteSet
+ * @extends Collection
  * Item Collection specifically for handing Sprites.
- * @return {SpriteSet}
  */
 module.exports = function (opts) {
     var spritesToAdd = [],
@@ -2256,8 +2252,8 @@ module.exports = function (opts) {
     Util.mergeDefaults(opts, {
         name: 'dragon-texture-sprite',
         startingStrip: opts.startingStrip || global.Object.keys(stripMap)[0],
-        size: (stripMap[opts.startingStrip] || {}).size
     });
+    opts.size = opts.size || (stripMap[opts.startingStrip] || {}).size;
 
     return ClearSprite(opts).extend({
         strip: stripMap[opts.startingStrip],
@@ -2823,7 +2819,7 @@ var $ = require('dragonjs'),
 
 module.exports = $.Sprite({
     name: 'drag',
-    solid: false,
+    solid: true,
     depth: 10,
     collisionSets: [
         $.collisions,
