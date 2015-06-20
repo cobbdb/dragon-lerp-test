@@ -9,14 +9,14 @@ module.exports = $.Screen({
     spriteSet: [
         Static({
             pos: $.Point(
-                $.canvas.width / 2 - 32,
-                $.canvas.height / 2 - 32
+                $.canvas.width / 2,
+                $.canvas.height / 2
             )
         }),
         Static({
             pos: $.Point(
-                $.canvas.width / 2 - 32 + 90,
-                $.canvas.height / 2 - 32 + 50
+                $.canvas.width / 2 + 90,
+                $.canvas.height / 2 + 50
             )
         }),
         require('../sprites/drag.js'),

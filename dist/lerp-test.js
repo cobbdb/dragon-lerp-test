@@ -689,62 +689,43 @@ module.exports = function (opts) {
         lastPos,
         collisionSets = [].concat(opts.collisionSets || []);
 
-    function classify(E) {
-        return {
-            x: (E.x > 0) ? 'right' : 'left',
-            y: (E.y > 0) ? 'down' : 'up'
-        };
-    }
-    function magnitude(clas, T, O) {
-        var a = Math.abs(T.bottom - O.top),
-            b = Math.abs(T.top - O.bottom),
-            c = Math.abs(T.right - O.left),
-            d = Math.abs(T.left - O.right);
-        return {
-            x1: (clas.x === 'right') ? c : d,
-            y1: (clas.y === 'down') ? a : b
-        };
-    }
-    function flush(f, p, s, m, T, O) {
-        var target = Point(),
-            b = T.y - m * T.x;
-        if (f) {
-            if (p) { // down
-                // theta
-                target.y = O.top - T.height;
-                target.x = (target.y - b) / m;
-            } else { // up
-                // beta
-                target.y = O.bottom;
-                target.x = (target.y - b) / m;
-            }
-        } else {
-            if (s) { // right
-                // phi
-                target.x = O.left - T.width;
-                target.y = m * target.x + b;
-            } else { // left
-                // eta
-                target.x = O.right;
-                target.y = m * target.x + b;
-            }
-        }
-        return target;
-    }
     opts.on = opts.on || {};
     opts.on['colliding/$/solid'] = function (other) {
         if (lastPos) {
-            var E = this.mask.pos().subtract(lastPos);
+            var C = this.mask.pos();
+            var S = other.mask;
+            var E = C.subtract(lastPos);
             var m = E.y / E.x;
-            var clas = classify(E);
-            var mag = magnitude(clas, this.mask, other.mask);
-            var f = mag.y1 < mag.x1;
-            var p = clas.x === 'right';
-            var s = clas.y === 'down';
-            var T = this.mask;
-            var O = other.mask;
-            var target = flush(f, p, s, m, T, O);
-            this.move(target);
+            var b = C.y - m * C.x;
+
+            var R = Point();
+            R.x = S.right;
+            R.y = m * R.x + b;
+            var L = Point();
+            L.x = S.x - this.size.width;
+            L.y = m * L.x + b;
+            var T = Point();
+            T.y = S.y - this.size.height;
+            T.x = (T.y - b) / m;
+            var B = Point();
+            B.y = S.bottom;
+            B.x = (B.y - b) / m;
+
+            var W = R.subtract(lastPos);
+            var X = L.subtract(lastPos);
+            var Y = T.subtract(lastPos);
+            var Z = B.subtract(lastPos);
+
+            var set = [W, X, Y, Z];
+            function sqr(num) {
+                return num * num;
+            }
+            set.sort(function (a, b) {
+                var A = sqr(a.x) + sqr(a.y),
+                    B = sqr(b.x) + sqr(b.y);
+                return A - B;
+            });
+            this.move(set[1]);
         }
     };
 
@@ -809,6 +790,9 @@ module.exports = function (opts) {
         clearCollisions: function () {
             activeCollisions = {};
         },
+        /**
+         * @param {Number} id
+         */
         isCollidingWith: function (id) {
             return activeCollisions[id] || false;
         },
@@ -1101,10 +1085,10 @@ module.exports = function (pos, rad) {
                 var vect,
                     pt = Point(this.x, this.y);
 
-                if (this.x > rect.right) pt.x = rect.right;
-                else if (this.x < rect.x) pt.x = rect.x;
-                if (this.y > rect.bottom) pt.y = rect.bottom;
-                else if (this.y < rect.y) pt.y = rect.y;
+                if (this.x >= rect.right) pt.x = rect.right;
+                else if (this.x <= rect.x) pt.x = rect.x;
+                if (this.y >= rect.bottom) pt.y = rect.bottom;
+                else if (this.y <= rect.y) pt.y = rect.y;
 
                 vect = Vector(
                     this.x - pt.x,
@@ -1356,10 +1340,10 @@ module.exports = function (pos, size) {
         intersects: {
             rectangle: function (rect) {
                 return (
-                    this.x < rect.right &&
-                    this.right > rect.x &&
-                    this.y < rect.bottom &&
-                    this.bottom > rect.y
+                    this.x <= rect.right &&
+                    this.right >= rect.x &&
+                    this.y <= rect.bottom &&
+                    this.bottom >= rect.y
                 );
             },
             circle: function (circ) {
@@ -2787,14 +2771,14 @@ module.exports = $.Screen({
     spriteSet: [
         Static({
             pos: $.Point(
-                $.canvas.width / 2 - 32,
-                $.canvas.height / 2 - 32
+                $.canvas.width / 2,
+                $.canvas.height / 2
             )
         }),
         Static({
             pos: $.Point(
-                $.canvas.width / 2 - 32 + 90,
-                $.canvas.height / 2 - 32 + 50
+                $.canvas.width / 2 + 90,
+                $.canvas.height / 2 + 50
             )
         }),
         require('../sprites/drag.js'),
@@ -2869,7 +2853,11 @@ module.exports = $.ui.Label({
 },{"dragonjs":13}],57:[function(require,module,exports){
 var $ = require('dragonjs');
 
+/**
+ * @param {Point} opts.pos
+ */
 module.exports = function (opts) {
+    opts.pos.subtract($.Point(-32, -32), true);
     return $.Sprite({
         name: 'static',
         solid: true,

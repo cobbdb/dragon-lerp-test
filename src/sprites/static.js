@@ -1,6 +1,10 @@
 var $ = require('dragonjs');
 
+/**
+ * @param {Point} opts.pos
+ */
 module.exports = function (opts) {
+    opts.pos.subtract($.Point(-32, -32), true);
     return $.Sprite({
         name: 'static',
         solid: true,
