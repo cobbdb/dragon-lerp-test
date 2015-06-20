@@ -607,6 +607,9 @@ module.exports = function (opts) {
  * @param {String} opts.name
  */
 module.exports = function (opts) {
+    /**
+     * @type {Array Of CollisionItem}
+     */
     var activeCollisions = [];
 
     return {
@@ -695,37 +698,48 @@ module.exports = function (opts) {
             var C = this.mask.pos();
             var S = other.mask;
             var E = C.subtract(lastPos);
-            var m = E.y / E.x;
-            var b = C.y - m * C.x;
+            var finite = E.x !== 0;
+            if (finite) {
+                var m = E.y / E.x;
+                var b = C.y - m * C.x;
 
-            var R = Point();
-            R.x = S.right;
-            R.y = m * R.x + b;
-            var L = Point();
-            L.x = S.x - this.size.width;
-            L.y = m * L.x + b;
-            var T = Point();
-            T.y = S.y - this.size.height;
-            T.x = (T.y - b) / m;
-            var B = Point();
-            B.y = S.bottom;
-            B.x = (B.y - b) / m;
+                var pos = Point();
+                pos.x = S.right;
+                pos.y = m * pos.x + b;
+                var R = Rectangle(pos.clone(), this.size);
+                pos.x = S.x - this.size.width;
+                pos.y = m * pos.x + b;
+                var L = Rectangle(pos.clone(), this.size);
+                pos.y = S.y - this.size.height;
+                pos.x = (pos.y - b) / m;
+                var T = Rectangle(pos.clone(), this.size);
+                pos.y = S.bottom;
+                pos.x = (pos.y - b) / m;
+                var B = Rectangle(pos.clone(), this.size);
 
-            var W = R.subtract(lastPos);
-            var X = L.subtract(lastPos);
-            var Y = T.subtract(lastPos);
-            var Z = B.subtract(lastPos);
-
-            var set = [W, X, Y, Z];
-            function sqr(num) {
-                return num * num;
+                var set = [R, L, T, B];
+                set = set.filter(function (item) {
+                    return item.intersects(S);
+                });
+            } else {
+                var pos = Point();
+                pos.x = C.x;
+                pos.y = S.y - this.size.height;
+                var T = Rectangle(pos.clone(), this.size);
+                pos.x = C.x;
+                pos.y = S.bottom;
+                var B = Rectangle(pos.clone(), this.size);
+                set = [T, B];
             }
-            set.sort(function (a, b) {
-                var A = sqr(a.x) + sqr(a.y),
-                    B = sqr(b.x) + sqr(b.y);
-                return A - B;
-            });
-            this.move(set[1]);
+
+            var A = set[0].pos().subtract(lastPos);
+            A.multiply(A, true);
+            var magA = A.x + A.y;
+            var B = set[1].pos().subtract(lastPos);
+            B.multiply(B, true);
+            var magB = B.x + B.y;
+            var target = (magA < magB) ? set[0] : set[1];
+            this.move(target.pos());
         }
     };
 
@@ -757,7 +771,6 @@ module.exports = function (opts) {
             var curPos = this.mask.pos(),
                 newPos = pos.add(this.offset);
             if (!newPos.equals(curPos)) {
-                //lastPos = curPos.subtract(this.offset);
                 lastPos = curPos;
                 this.mask.move(newPos);
             }
@@ -829,7 +842,7 @@ module.exports = {
 
     // I/O
     Mouse: require('./io/mouse.js'),
-    Keyboard: require('./io/keyboard.js'),
+    Key: require('./io/keyboard.js'),
     Audio: require('./io/audio.js'),
     Font: require('./io/font.js'),
     canvas: require('./io/canvas.js'),
@@ -1209,7 +1222,7 @@ module.exports = Dimension;
  * @param {Number} x
  * @param {Number} y
  */
-function Point(x, y) {
+module.exports = function (x, y) {
     return {
         x: x || 0,
         y: y || 0,
@@ -1217,7 +1230,7 @@ function Point(x, y) {
          * @return {Point}
          */
         clone: function () {
-            return Point(this.x, this.y);
+            return module.exports(this.x, this.y);
         },
         /**
          * @param {Point} other
@@ -1270,9 +1283,7 @@ function Point(x, y) {
             return target;
         }
     };
-}
-
-module.exports = Point;
+};
 
 },{}],20:[function(require,module,exports){
 function isEqual(my, other, tfactor, mfactor) {
@@ -1387,6 +1398,14 @@ module.exports = function (pos, size) {
             this.left = pos.x;
         },
         /**
+         * @param {Point} offset
+         */
+        shift: function (offset) {
+            this.move(
+                this.pos().add(offset)
+            );
+        },
+        /**
          * @param {Dimension} size
          */
         resize: function (size) {
@@ -1435,6 +1454,9 @@ module.exports = function (opts) {
         name: opts.name,
         move: BaseClass.Abstract,
         resize: BaseClass.Abstract,
+        /**
+         * @param {Shape} other
+         */
         intersects: function (other) {
             return intersectMap[other.name].call(this, other);
         },
@@ -2831,6 +2853,21 @@ module.exports = $.Sprite({
                 offset.x - this.size.width / 2,
                 offset.y - this.size.height / 2
             ));
+        } else {
+            this.speed.x = 0;
+            this.speed.y = 0;
+            if ($.Key.arrow.up) {
+                this.speed.y -= 2;
+            }
+            if ($.Key.arrow.right) {
+                this.speed.x += 2;
+            }
+            if ($.Key.arrow.down) {
+                this.speed.y += 2;
+            }
+            if ($.Key.arrow.left) {
+                this.speed.x -= 2;
+            }
         }
         this.base.update();
     }

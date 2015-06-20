@@ -31,6 +31,21 @@ module.exports = $.Sprite({
                 offset.x - this.size.width / 2,
                 offset.y - this.size.height / 2
             ));
+        } else {
+            this.speed.x = 0;
+            this.speed.y = 0;
+            if ($.Key.arrow.up) {
+                this.speed.y -= 2;
+            }
+            if ($.Key.arrow.right) {
+                this.speed.x += 2;
+            }
+            if ($.Key.arrow.down) {
+                this.speed.y += 2;
+            }
+            if ($.Key.arrow.left) {
+                this.speed.x -= 2;
+            }
         }
         this.base.update();
     }
