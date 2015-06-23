@@ -1,7 +1,7 @@
 var $ = require('dragonjs'),
     label = require('./label.js');
 
-module.exports = $.Sprite({
+module.exports = $.ClearSprite({
     name: 'drag',
     solid: true,
     depth: 10,
@@ -9,17 +9,8 @@ module.exports = $.Sprite({
         $.collisions,
         require('../collisions/lerp.js')
     ],
-    mask: $.Rectangle(
-        $.Point(),
-        $.Dimension(32, 32)
-    ),
-    strips: {
-        'drag': $.AnimationStrip({
-            sheet: $.SpriteSheet({
-                src: 'drag.png'
-            })
-        })
-    },
+    mask: $.Rectangle(),
+    size: $.Dimension(32, 32),
     pos: $.Point(20, 20)
 }).extend({
     update: function () {
@@ -48,5 +39,14 @@ module.exports = $.Sprite({
             }
         }
         this.base.update();
+    },
+    draw: function (ctx) {
+        ctx.fillStyle = '#b6ff00';
+        ctx.fillRect(
+            this.pos.x,
+            this.pos.y,
+            this.size.width,
+            this.size.height
+        );
     }
 });
