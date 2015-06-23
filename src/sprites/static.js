@@ -5,23 +5,22 @@ var $ = require('dragonjs');
  */
 module.exports = function (opts) {
     opts.pos.subtract($.Point(-32, -32), true);
-    return $.Sprite({
+    return $.ClearSprite({
         name: 'static',
         solid: true,
-        collisionSets: [
-            require('../collisions/lerp.js')
-        ],
-        mask: $.Rectangle(
-            $.Point(),
-            $.Dimension(64, 64)
-        ),
-        strips: {
-            'static': $.AnimationStrip({
-                sheet: $.SpriteSheet({
-                    src: 'static.png'
-                })
-            })
-        },
+        collisionSets: require('../collisions/lerp.js'),
+        mask: $.Rectangle(),
+        size: $.Dimension(64, 64),
         pos: opts.pos
+    }).extend({
+        draw: function (ctx) {
+            ctx.fillStyle = '#444';
+            ctx.fillRect(
+                this.pos.x,
+                this.pos.y,
+                this.size.width,
+                this.size.height
+            );
+        }
     });
 };

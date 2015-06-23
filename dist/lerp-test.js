@@ -690,16 +690,22 @@ module.exports = function (opts) {
         collisionsThisFrame = {},
         updated = false,
         lastPos,
+        moved = false,
         collisionSets = [].concat(opts.collisionSets || []);
 
     opts.on = opts.on || {};
+    /**
+     * So, basiclly shifting (speed) is fine, but
+     * dragging - lastPos is not pos last frame, it
+     * is the point where the drag was engaged.
+     * dragging can't be treated the same as speed.
+     */
     opts.on['colliding/$/solid'] = function (other) {
-        if (lastPos) {
+        if (moved) {
             var C = this.mask.pos();
             var S = other.mask;
             var E = C.subtract(lastPos);
-            var finite = E.x !== 0;
-            if (finite) {
+            if (E.x !== 0) {
                 var m = E.y / E.x;
                 var b = C.y - m * C.x;
 
@@ -771,7 +777,13 @@ module.exports = function (opts) {
             var curPos = this.mask.pos(),
                 newPos = pos.add(this.offset);
             if (!newPos.equals(curPos)) {
-                lastPos = curPos;
+                moved = true;
+                if (this.dragging) {
+                    //lastPos = Mouse.dragStart;
+                    lastPos = curPos;
+                } else {
+                    lastPos = curPos;
+                }
                 this.mask.move(newPos);
             }
         },
@@ -790,6 +802,7 @@ module.exports = function (opts) {
             }
         },
         teardown: function () {
+            moved = false;
             updated = false;
             collisionsThisFrame = {};
         },
@@ -1798,6 +1811,7 @@ module.exports = {
 var Point = require('../geom/point.js'),
     Vector = require('../geom/vector.js'),
     canvas = require('./canvas.js'),
+    dragStart = null,
     isDown = false,
     isDragging = false,
     isHolding = false,
@@ -1850,6 +1864,7 @@ document.addEventListener(
     endEventName,
     function (event) {
         isDown = isDragging = isHolding = false;
+        dragStart = null;
     }
 );
 canvas.addEventListener(
@@ -1858,12 +1873,13 @@ canvas.addEventListener(
         last = current;
         current = getOffset(event);
 
-        if (isDown) {
+        if (isDown && !isDragging) {
             shift.x = current.x - last.x;
             shift.y = current.y - last.y;
             // Drag threshold.
             if (shift.magnitude > 1) {
                 isDragging = true;
+                dragStart = current;
             }
         }
     }
@@ -1886,6 +1902,9 @@ module.exports = {
      */
     get offset () {
         return current;
+    },
+    get dragStart () {
+        return dragStart;
     },
     on: {
         down: function (cb, thisArg) {
@@ -2895,24 +2914,23 @@ var $ = require('dragonjs');
  */
 module.exports = function (opts) {
     opts.pos.subtract($.Point(-32, -32), true);
-    return $.Sprite({
+    return $.ClearSprite({
         name: 'static',
         solid: true,
-        collisionSets: [
-            require('../collisions/lerp.js')
-        ],
-        mask: $.Rectangle(
-            $.Point(),
-            $.Dimension(64, 64)
-        ),
-        strips: {
-            'static': $.AnimationStrip({
-                sheet: $.SpriteSheet({
-                    src: 'static.png'
-                })
-            })
-        },
+        collisionSets: require('../collisions/lerp.js'),
+        mask: $.Rectangle(),
+        size: $.Dimension(64, 64),
         pos: opts.pos
+    }).extend({
+        draw: function (ctx) {
+            ctx.fillStyle = '#666';
+            ctx.fillRect(
+                this.pos.x,
+                this.pos.y,
+                this.size.width,
+                this.size.height
+            );
+        }
     });
 };
 
