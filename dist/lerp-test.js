@@ -671,6 +671,7 @@ module.exports = function (opts) {
 };
 
 },{}],12:[function(require,module,exports){
+(function (global){
 var Counter = require('./util/id-counter.js'),
     Rectangle = require('./geom/rectangle.js'),
     Point = require('./geom/point.js'),
@@ -695,13 +696,35 @@ module.exports = function (opts) {
 
     opts.on = opts.on || {};
     /**
-     * So, basiclly shifting (speed) is fine, but
-     * dragging - lastPos is not pos last frame, it
-     * is the point where the drag was engaged.
-     * dragging can't be treated the same as speed.
+     * @param {CollisionItem} other
      */
     opts.on['colliding/$/solid'] = function (other) {
+        /** eject solution below */
         if (moved) {
+            var T = this.mask.bottom - other.mask.top,
+                R = other.mask.right - this.mask.left,
+                B = other.mask.bottom - this.mask.top,
+                L = this.mask.right - other.mask.left,
+                M = global.Math.min(T, R, B, L),
+                target = this.pos.clone();
+            if (T === M) {
+                // top
+                target.y = other.mask.y - this.mask.height;
+            } else if (R === M) {
+                // right
+                target.x = other.mask.right;
+            } else if (B === M) {
+                // bottom
+                target.y = other.mask.bottom;
+            } else {
+                // left
+                target.x = other.mask.x - this.mask.width;
+            }
+            this.move(target);
+        }
+
+        /** lerp solution below */
+        /*if (moved) {
             var C = this.mask.pos();
             var S = other.mask;
             var E = C.subtract(lastPos);
@@ -746,7 +769,7 @@ module.exports = function (opts) {
             var magB = B.x + B.y;
             var target = (magA < magB) ? set[0] : set[1];
             this.move(target.pos());
-        }
+        }*/
     };
 
     // Provide easy way to track when dragged.
@@ -778,12 +801,12 @@ module.exports = function (opts) {
                 newPos = pos.add(this.offset);
             if (!newPos.equals(curPos)) {
                 moved = true;
-                if (this.dragging) {
+                /*if (this.dragging) {
                     //lastPos = Mouse.dragStart;
                     lastPos = curPos;
                 } else {
                     lastPos = curPos;
-                }
+                }*/
                 this.mask.move(newPos);
             }
         },
@@ -830,6 +853,7 @@ module.exports = function (opts) {
     });
 };
 
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"./geom/point.js":19,"./geom/rectangle.js":21,"./io/mouse.js":31,"./item.js":32,"./util/id-counter.js":47}],13:[function(require,module,exports){
 var Game = require('./game.js'),
     SetUtil = require('./util/set.js'),
