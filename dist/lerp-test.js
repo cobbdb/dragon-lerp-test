@@ -415,10 +415,11 @@ module.exports = function (opts) {
     };
 };
 
-},{"./geom/dimension.js":18,"./geom/point.js":19,"./util/log.js":48}],9:[function(require,module,exports){
+},{"./geom/dimension.js":18,"./geom/point.js":19,"./util/log.js":49}],9:[function(require,module,exports){
 var BaseClass = require('baseclassjs'),
     CollisionItem = require('./collision-item.js'),
     Point = require('./geom/point.js'),
+    Vector = require('./geom/vector.js'),
     Dimension = require('./geom/dimension.js'),
     Rectangle = require('./geom/rectangle.js'),
     Util = require('./util/object.js');
@@ -474,25 +475,12 @@ module.exports = function (opts) {
         },
         rotation: opts.rotation || 0,
         depth: opts.depth || 0,
-        speed: opts.speed || Point(),
-        start: function () {
-            this.updating = true;
-            this.drawing = true;
-            this.trigger('start');
-        },
-        pause: function () {
-            this.updating = false;
-            this.drawing = true;
-            this.trigger('pause');
-        },
-        stop: function () {
-            this.updating = false;
-            this.drawing = false;
-            this.trigger('stop');
-        },
+        speed: opts.speed || Vector(),
         update: function () {
             if (this.updating) {
-                this.shift();
+                if (!this.speed.is.zero) {
+                    this.shift();
+                }
                 this.base.update();
             }
         },
@@ -521,7 +509,7 @@ module.exports = function (opts) {
     });
 };
 
-},{"./collision-item.js":12,"./geom/dimension.js":18,"./geom/point.js":19,"./geom/rectangle.js":21,"./util/object.js":49,"baseclassjs":2}],10:[function(require,module,exports){
+},{"./collision-item.js":12,"./geom/dimension.js":18,"./geom/point.js":19,"./geom/rectangle.js":21,"./geom/vector.js":23,"./util/object.js":50,"baseclassjs":2}],10:[function(require,module,exports){
 var Item = require('./item.js');
 
 /**
@@ -602,7 +590,7 @@ module.exports = function (opts) {
     });
 };
 
-},{"./item.js":32}],11:[function(require,module,exports){
+},{"./item.js":33}],11:[function(require,module,exports){
 /**
  * @param {String} opts.name
  */
@@ -690,17 +678,18 @@ module.exports = function (opts) {
     var activeCollisions = {},
         collisionsThisFrame = {},
         updated = false,
-        lastPos,
         moved = false,
         collisionSets = [].concat(opts.collisionSets || []);
 
     opts.on = opts.on || {};
+
     /**
      * @param {CollisionItem} other
      */
     opts.on['colliding/$/solid'] = function (other) {
         // if (moved) needs to go away.. too situational
         if (moved) {
+            console.debug(this.name, '\tsolid collide()');
             var top = this.mask.bottom - other.mask.top,
                 right = other.mask.right - this.mask.left,
                 bottom = other.mask.bottom - this.mask.top,
@@ -750,6 +739,7 @@ module.exports = function (opts) {
          * @param {Point} pos
          */
         move: function (pos) {
+            console.debug(this.name, 'move()');
             var curPos = this.mask.pos(),
                 newPos = pos.add(this.offset);
             if (!newPos.equals(curPos)) {
@@ -801,7 +791,7 @@ module.exports = function (opts) {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./geom/point.js":19,"./geom/rectangle.js":21,"./io/mouse.js":31,"./item.js":32,"./util/id-counter.js":47}],13:[function(require,module,exports){
+},{"./geom/point.js":19,"./geom/rectangle.js":21,"./io/mouse.js":32,"./item.js":33,"./util/id-counter.js":48}],13:[function(require,module,exports){
 var Game = require('./game.js'),
     SetUtil = require('./util/set.js'),
     ObjUtil = require('./util/object.js');
@@ -862,7 +852,7 @@ module.exports = {
     Eventable: require('./interface/eventable.js')
 };
 
-},{"./animation-strip.js":8,"./clear-sprite.js":9,"./collision-handler.js":11,"./collision-item.js":12,"./dragon-collisions.js":14,"./game.js":16,"./geom/circle.js":17,"./geom/dimension.js":18,"./geom/point.js":19,"./geom/polar.js":20,"./geom/rectangle.js":21,"./geom/shape.js":22,"./geom/vector.js":23,"./interface/eventable.js":24,"./interface/fadeable.js":25,"./io/audio.js":26,"./io/canvas.js":27,"./io/font.js":28,"./io/keyboard.js":30,"./io/mouse.js":31,"./screen.js":36,"./sprite.js":38,"./spritesheet.js":39,"./ui/button.js":40,"./ui/decal.js":41,"./ui/label.js":42,"./ui/slider.js":43,"./util/frame-counter.js":46,"./util/id-counter.js":47,"./util/object.js":49,"./util/random.js":50,"./util/set.js":51}],14:[function(require,module,exports){
+},{"./animation-strip.js":8,"./clear-sprite.js":9,"./collision-handler.js":11,"./collision-item.js":12,"./dragon-collisions.js":14,"./game.js":16,"./geom/circle.js":17,"./geom/dimension.js":18,"./geom/point.js":19,"./geom/polar.js":20,"./geom/rectangle.js":21,"./geom/shape.js":22,"./geom/vector.js":23,"./interface/eventable.js":25,"./interface/fadeable.js":26,"./io/audio.js":27,"./io/canvas.js":28,"./io/font.js":29,"./io/keyboard.js":31,"./io/mouse.js":32,"./screen.js":37,"./sprite.js":39,"./spritesheet.js":40,"./ui/button.js":41,"./ui/decal.js":42,"./ui/label.js":43,"./ui/slider.js":44,"./util/frame-counter.js":47,"./util/id-counter.js":48,"./util/object.js":50,"./util/random.js":51,"./util/set.js":52}],14:[function(require,module,exports){
 var CollisionHandler = require('./collision-handler.js');
 
 module.exports = CollisionHandler({
@@ -916,7 +906,7 @@ module.exports = Collection().add([
     })
 ]);
 
-},{"./collection.js":10,"./collision-item.js":12,"./dragon-collisions.js":14,"./geom/dimension.js":18,"./geom/point.js":19,"./geom/rectangle.js":21,"./io/canvas.js":27,"./mask/screendrag.js":33,"./mask/screenhold.js":34,"./mask/screentap.js":35}],16:[function(require,module,exports){
+},{"./collection.js":10,"./collision-item.js":12,"./dragon-collisions.js":14,"./geom/dimension.js":18,"./geom/point.js":19,"./geom/rectangle.js":21,"./io/canvas.js":28,"./mask/screendrag.js":34,"./mask/screenhold.js":35,"./mask/screentap.js":36}],16:[function(require,module,exports){
 var FrameCounter = require('./util/frame-counter.js'),
     canvas = require('./io/canvas.js'),
     ctx = canvas.ctx,
@@ -1059,7 +1049,7 @@ module.exports = {
     }
 };
 
-},{"./dragon-collisions.js":14,"./dragon-masks.js":15,"./io/canvas.js":27,"./util/debug-console.js":44,"./util/frame-counter.js":46,"./util/id-counter.js":47}],17:[function(require,module,exports){
+},{"./dragon-collisions.js":14,"./dragon-masks.js":15,"./io/canvas.js":28,"./util/debug-console.js":45,"./util/frame-counter.js":47,"./util/id-counter.js":48}],17:[function(require,module,exports){
 (function (global){
 var Shape = require('./shape.js'),
     Vector = require('./vector.js'),
@@ -1148,23 +1138,33 @@ module.exports = function (pos, rad) {
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"./dimension.js":18,"./point.js":19,"./shape.js":22,"./vector.js":23}],18:[function(require,module,exports){
+var ZERO = require('./zero.js');
+
 /**
  * @class Dimension
  * @param {Number} w
  * @param {Number} h
  */
-function Dimension(w, h) {
-    return {
+module.exports = function (w, h) {
+    var self = {
         width: w || 0,
         height: h || 0,
         clone: function () {
-            return Dimension(this.width, this.height);
+            return module.exports(this.width, this.height);
         },
         equals: function (other) {
             return (
                 this.width === other.width &&
                 this.height === other.height
             );
+        },
+        is: {
+            /**
+             * @return {Boolean}
+             */
+            get zero () {
+                return self.equals(ZERO);
+            }
         },
         /**
          * @param {Dimension} scale
@@ -1196,18 +1196,19 @@ function Dimension(w, h) {
             return target;
         }
     };
-}
+    return self;
+};
 
-module.exports = Dimension;
+},{"./zero.js":24}],19:[function(require,module,exports){
+var ZERO = require('./zero.js');
 
-},{}],19:[function(require,module,exports){
 /**
  * @class Point
  * @param {Number} x
  * @param {Number} y
  */
 module.exports = function (x, y) {
-    return {
+    var self = {
         x: x || 0,
         y: y || 0,
         /**
@@ -1226,6 +1227,14 @@ module.exports = function (x, y) {
                 this.y === other.y
             );
         },
+        is: {
+            /**
+             * @return {Boolean} True if equal to (0,0).
+             */
+            get zero () {
+                return self.equals(ZERO);
+            }
+        },
         /**
          * @param {Point} pos
          * @param {Boolean} [shallow] True to mutate.
@@ -1238,9 +1247,9 @@ module.exports = function (x, y) {
             return target;
         },
         /**
-         * @param {Point} offset
+         * @param {Point|Vector} offset
          * @param {Boolean} [shallow] True to mutate.
-         * @return {Point|Vector} This point after shifting.
+         * @return {Point} This point after shifting.
          */
         multiply: function (scale, shallow) {
             var target = shallow ? this : this.clone();
@@ -1267,9 +1276,10 @@ module.exports = function (x, y) {
             return target;
         }
     };
+    return self;
 };
 
-},{}],20:[function(require,module,exports){
+},{"./zero.js":24}],20:[function(require,module,exports){
 function isEqual(my, other, tfactor, mfactor) {
     var mag = my.magnitude === mfactor * other.magnitude,
         mytheta = (my.theta % Math.PI).toFixed(5),
@@ -1449,13 +1459,15 @@ module.exports = function (opts) {
 };
 
 },{"./point.js":19,"baseclassjs":2}],23:[function(require,module,exports){
+var ZERO = require('./zero.js');
+
 /**
  * @class Vector
  * @param {Number} [x] Defaults to 0.
  * @param {Number} [y] Defaults to 0.
  */
-function Vector(x, y) {
-    return {
+module.exports = function (x, y) {
+    var self = {
         x: x || 0,
         y: y || 0,
         get magnitude () {
@@ -1467,7 +1479,7 @@ function Vector(x, y) {
             );
         },
         clone: function () {
-            return Vector(
+            return module.exports(
                 this.x,
                 this.y
             );
@@ -1477,6 +1489,14 @@ function Vector(x, y) {
                 this.x === other.x &&
                 this.y === other.y
             );
+        },
+        is: {
+            /**
+             * @return {Boolean} True if equal to <0,0>.
+             */
+            get zero () {
+                return self.equals(ZERO);
+            }
         },
         toPolar: function () {
             var Polar = require('./polar.js');
@@ -1509,11 +1529,22 @@ function Vector(x, y) {
             return this;
         }
     };
-}
+    return self;
+};
 
-module.exports = Vector;
+},{"./polar.js":20,"./zero.js":24}],24:[function(require,module,exports){
+module.exports = {
+    x: 0,
+    y: 0,
+    right: 0,
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 0,
+    height: 0
+};
 
-},{"./polar.js":20}],24:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 var BaseClass = require('baseclassjs');
 
 /**
@@ -1566,7 +1597,7 @@ module.exports = function (opts) {
     });
 };
 
-},{"baseclassjs":2}],25:[function(require,module,exports){
+},{"baseclassjs":2}],26:[function(require,module,exports){
 var BaseClass = require('baseclassjs');
 
 module.exports = BaseClass.Interface({
@@ -1574,7 +1605,7 @@ module.exports = BaseClass.Interface({
     fadeOut: function () {}
 });
 
-},{"baseclassjs":2}],26:[function(require,module,exports){
+},{"baseclassjs":2}],27:[function(require,module,exports){
 /**
  * @param {String} opts.src
  * @param {Boolean} [opts.loop] Defaults to false.
@@ -1621,7 +1652,7 @@ module.exports = function (opts) {
     return audio;
 };
 
-},{}],27:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 var mobile = require('../util/detect-mobile.js'),
     canvas = document.createElement('canvas');
 
@@ -1645,7 +1676,7 @@ canvas.ctx = canvas.getContext('2d');
 
 module.exports = canvas;
 
-},{"../util/detect-mobile.js":45}],28:[function(require,module,exports){
+},{"../util/detect-mobile.js":46}],29:[function(require,module,exports){
 var str = require('curb'),
     tpl = "@font-face{font-family:'%s';font-style:%s;font-weight:%s;src:url(assets/fonts/%s);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02C6,U+02DA,U+02DC,U+2000-206F,U+2074,U+20AC,U+2212,U+2215,U+E0FF,U+EFFD,U+F000}",
     cache = {};
@@ -1673,7 +1704,7 @@ module.exports = {
     }
 };
 
-},{"curb":6}],29:[function(require,module,exports){
+},{"curb":6}],30:[function(require,module,exports){
 module.exports = function (src) {
     var img = new Image();
     img.ready = false;
@@ -1708,7 +1739,7 @@ module.exports = function (src) {
     return img;
 };
 
-},{}],30:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 var nameMap = {
         alt: false,
         ctrl: false,
@@ -1777,7 +1808,7 @@ module.exports = {
     }
 };
 
-},{}],31:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 (function (global){
 var Point = require('../geom/point.js'),
     Vector = require('../geom/vector.js'),
@@ -1920,7 +1951,7 @@ module.exports = {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../geom/point.js":19,"../geom/vector.js":23,"./canvas.js":27}],32:[function(require,module,exports){
+},{"../geom/point.js":19,"../geom/vector.js":23,"./canvas.js":28}],33:[function(require,module,exports){
 var BaseClass = require('baseclassjs'),
     Eventable = require('./interface/eventable.js');
 
@@ -1940,11 +1971,26 @@ module.exports = function (opts) {
     return BaseClass({
         name: opts.name || 'dragon-item',
         depth: 0,
-        updating: true,
-        drawing: true,
+        updating: (typeof opts.updating === 'boolean') ? opts.updating : true,
+        drawing: (typeof opts.drawing === 'boolean') ? opts.drawing : true,
         update: BaseClass.Stub,
         draw: BaseClass.Stub,
-        teardown: BaseClass.Stub
+        teardown: BaseClass.Stub,
+        start: function () {
+            this.updating = true;
+            this.drawing = true;
+            this.trigger('start');
+        },
+        pause: function () {
+            this.updating = false;
+            this.drawing = true;
+            this.trigger('pause');
+        },
+        stop: function () {
+            this.updating = false;
+            this.drawing = false;
+            this.trigger('stop');
+        }
     }).implement(
         Eventable({
             events: opts.on,
@@ -1953,7 +1999,7 @@ module.exports = function (opts) {
     );
 };
 
-},{"./interface/eventable.js":24,"baseclassjs":2}],33:[function(require,module,exports){
+},{"./interface/eventable.js":25,"baseclassjs":2}],34:[function(require,module,exports){
 var CollisionItem = require('../collision-item.js'),
     Circle = require('../geom/circle.js'),
     Point = require('../geom/point.js'),
@@ -1967,21 +2013,24 @@ var CollisionItem = require('../collision-item.js'),
 module.exports = CollisionItem({
     name: 'screendrag',
     mask: Circle(Point(), 8),
-    collisionSets: dragonCollisions
+    collisionSets: dragonCollisions,
+    updating: false,
+    drawing: false
 }).extend({
     update: function () {
-        if (Mouse.is.dragging) {
-            this.move(Mouse.offset);
-        } else {
-            this.move(
-                Point(-999, -999)
-            );
-        }
+        this.move(Mouse.offset);
         this.base.update();
     }
 });
 
-},{"../collision-item.js":12,"../dragon-collisions.js":14,"../geom/circle.js":17,"../geom/point.js":19,"../io/mouse.js":31}],34:[function(require,module,exports){
+Mouse.on.drag(function () {
+    this.start();
+}, module.exports);
+Mouse.on.up(function () {
+    this.stop();
+}, module.exports);
+
+},{"../collision-item.js":12,"../dragon-collisions.js":14,"../geom/circle.js":17,"../geom/point.js":19,"../io/mouse.js":32}],35:[function(require,module,exports){
 var CollisionItem = require('../collision-item.js'),
     Circle = require('../geom/circle.js'),
     Point = require('../geom/point.js'),
@@ -1995,31 +2044,32 @@ var CollisionItem = require('../collision-item.js'),
 module.exports = CollisionItem({
     name: 'screenhold',
     mask: Circle(Point(), 8),
-    collisionSets: dragonCollisions
+    collisionSets: dragonCollisions,
+    updating: false,
+    drawing: false
 }).extend({
     update: function () {
-        if (Mouse.is.down && !Mouse.is.dragging) {
-            this.move(Mouse.offset);
-        } else {
-            this.move(
-                Point(-999, -999)
-            );
-        }
+        this.move(Mouse.offset);
         this.base.update();
     }
 });
 
-},{"../collision-item.js":12,"../dragon-collisions.js":14,"../geom/circle.js":17,"../geom/point.js":19,"../io/mouse.js":31}],35:[function(require,module,exports){
+Mouse.on.down(function () {
+    this.start();
+}, module.exports);
+Mouse.on.drag(function () {
+    this.stop();
+}, module.exports);
+Mouse.on.up(function () {
+    this.stop();
+}, module.exports);
+
+},{"../collision-item.js":12,"../dragon-collisions.js":14,"../geom/circle.js":17,"../geom/point.js":19,"../io/mouse.js":32}],36:[function(require,module,exports){
 var CollisionItem = require('../collision-item.js'),
     Circle = require('../geom/circle.js'),
     Point = require('../geom/point.js'),
     Mouse = require('../io/mouse.js'),
-    dragonCollisions = require('../dragon-collisions.js'),
-    tapping = false;
-
-Mouse.on.down(function () {
-    tapping = true;
-});
+    dragonCollisions = require('../dragon-collisions.js');
 
 /**
  * @class ScreenTap
@@ -2031,19 +2081,17 @@ module.exports = CollisionItem({
     collisionSets: dragonCollisions
 }).extend({
     update: function () {
-        if (tapping) {
-            tapping = false;
-            this.move(Mouse.offset);
-        } else {
-            this.move(
-                Point(-999, -999)
-            );
-        }
+        this.move(Mouse.offset);
         this.base.update();
+        this.stop();
     }
 });
 
-},{"../collision-item.js":12,"../dragon-collisions.js":14,"../geom/circle.js":17,"../geom/point.js":19,"../io/mouse.js":31}],36:[function(require,module,exports){
+Mouse.on.down(function () {
+    this.start();
+}, module.exports);
+
+},{"../collision-item.js":12,"../dragon-collisions.js":14,"../geom/circle.js":17,"../geom/point.js":19,"../io/mouse.js":32}],37:[function(require,module,exports){
 var SpriteSet = require('./sprite-set.js');
 
 /**
@@ -2170,7 +2218,7 @@ module.exports = function (opts) {
     });
 };
 
-},{"./sprite-set.js":37}],37:[function(require,module,exports){
+},{"./sprite-set.js":38}],38:[function(require,module,exports){
 var Counter = require('./util/id-counter.js'),
     Collection = require('./collection.js');
 
@@ -2224,7 +2272,7 @@ module.exports = function (opts) {
     });
 };
 
-},{"./collection.js":10,"./util/id-counter.js":47}],38:[function(require,module,exports){
+},{"./collection.js":10,"./util/id-counter.js":48}],39:[function(require,module,exports){
 (function (global){
 var ClearSprite = require('./clear-sprite.js'),
     Point = require('./geom/point.js'),
@@ -2318,7 +2366,7 @@ module.exports = function (opts) {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./clear-sprite.js":9,"./geom/dimension.js":18,"./geom/point.js":19,"./geom/rectangle.js":21,"./util/object.js":49}],39:[function(require,module,exports){
+},{"./clear-sprite.js":9,"./geom/dimension.js":18,"./geom/point.js":19,"./geom/rectangle.js":21,"./util/object.js":50}],40:[function(require,module,exports){
 var createImage = require('./io/image.js'),
     cache = {};
 
@@ -2343,7 +2391,7 @@ module.exports = function (opts) {
     return img;
 };
 
-},{"./io/image.js":29}],40:[function(require,module,exports){
+},{"./io/image.js":30}],41:[function(require,module,exports){
 var Sprite = require('../sprite.js'),
     Rectangle = require('../geom/rectangle.js'),
     Point = require('../geom/point.js'),
@@ -2409,7 +2457,7 @@ module.exports = function (opts) {
     });
 };
 
-},{"../animation-strip.js":8,"../dragon-collisions.js":14,"../geom/point.js":19,"../geom/rectangle.js":21,"../sprite.js":38,"../spritesheet.js":39}],41:[function(require,module,exports){
+},{"../animation-strip.js":8,"../dragon-collisions.js":14,"../geom/point.js":19,"../geom/rectangle.js":21,"../sprite.js":39,"../spritesheet.js":40}],42:[function(require,module,exports){
 var Sprite = require('../sprite.js'),
     AnimationStrip = require('../animation-strip.js'),
     SpriteSheet = require('../spritesheet.js');
@@ -2439,7 +2487,7 @@ module.exports = function (opts) {
     return Sprite(opts);
 };
 
-},{"../animation-strip.js":8,"../sprite.js":38,"../spritesheet.js":39}],42:[function(require,module,exports){
+},{"../animation-strip.js":8,"../sprite.js":39,"../spritesheet.js":40}],43:[function(require,module,exports){
 var ClearSprite = require('../clear-sprite.js');
 
 /**
@@ -2470,7 +2518,7 @@ module.exports = function (opts) {
     });
 };
 
-},{"../clear-sprite.js":9}],43:[function(require,module,exports){
+},{"../clear-sprite.js":9}],44:[function(require,module,exports){
 var Sprite = require('../sprite.js'),
     Dimension = require('../geom/dimension.js'),
     Rectangle = require('../geom/rectangle.js'),
@@ -2615,20 +2663,20 @@ module.exports = function (opts) {
     });
 };
 
-},{"../animation-strip.js":8,"../clear-sprite.js":9,"../dragon-collisions.js":14,"../geom/dimension.js":18,"../geom/point.js":19,"../geom/rectangle.js":21,"../sprite.js":38,"../spritesheet.js":39}],44:[function(require,module,exports){
+},{"../animation-strip.js":8,"../clear-sprite.js":9,"../dragon-collisions.js":14,"../geom/dimension.js":18,"../geom/point.js":19,"../geom/rectangle.js":21,"../sprite.js":39,"../spritesheet.js":40}],45:[function(require,module,exports){
 module.exports = {
     show: {
         fps: function () {}
     }
 };
 
-},{}],45:[function(require,module,exports){
+},{}],46:[function(require,module,exports){
 /**
  * @see https://hacks.mozilla.org/2013/04/detecting-touch-its-the-why-not-the-how/
  */
 module.exports = 'ontouchstart' in window;
 
-},{}],46:[function(require,module,exports){
+},{}],47:[function(require,module,exports){
 var timeSinceLastSecond = frameCountThisSecond = frameRate = 0,
     timeLastFrame = Date.now();
 
@@ -2657,7 +2705,7 @@ module.exports = {
     }
 };
 
-},{}],47:[function(require,module,exports){
+},{}],48:[function(require,module,exports){
 var counter = 0;
 
 module.exports = {
@@ -2670,12 +2718,12 @@ module.exports = {
     }
 };
 
-},{}],48:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
 var Lumberjack = require('lumberjackjs');
 
 module.exports = Lumberjack();
 
-},{"lumberjackjs":7}],49:[function(require,module,exports){
+},{"lumberjackjs":7}],50:[function(require,module,exports){
 module.exports = {
     /**
      * Merge properties from the right object into
@@ -2699,7 +2747,7 @@ module.exports = {
     }
 };
 
-},{}],50:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
 (function (global){
 var i,
     len = 50,
@@ -2723,7 +2771,7 @@ module.exports = function () {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],51:[function(require,module,exports){
+},{}],52:[function(require,module,exports){
 var random = require('./random.js');
 
 module.exports = {
@@ -2756,14 +2804,14 @@ module.exports = {
     }
 };
 
-},{"./random.js":50}],52:[function(require,module,exports){
+},{"./random.js":51}],53:[function(require,module,exports){
 var $ = require('dragonjs');
 
 module.exports = $.CollisionHandler({
     name: 'lerp'
 });
 
-},{"dragonjs":13}],53:[function(require,module,exports){
+},{"dragonjs":13}],54:[function(require,module,exports){
 var $ = require('dragonjs');
 
 $.addScreens([
@@ -2771,7 +2819,7 @@ $.addScreens([
 ]);
 $.run(true);
 
-},{"./screens/lerp.js":54,"dragonjs":13}],54:[function(require,module,exports){
+},{"./screens/lerp.js":55,"dragonjs":13}],55:[function(require,module,exports){
 var $ = require('dragonjs'),
     Static = require('../sprites/static.js');
 
@@ -2809,7 +2857,7 @@ module.exports = $.Screen({
     }
 });
 
-},{"../collisions/lerp.js":52,"../sprites/drag.js":55,"../sprites/label.js":56,"../sprites/static.js":57,"dragonjs":13}],55:[function(require,module,exports){
+},{"../collisions/lerp.js":53,"../sprites/drag.js":56,"../sprites/label.js":57,"../sprites/static.js":58,"dragonjs":13}],56:[function(require,module,exports){
 var $ = require('dragonjs'),
     label = require('./label.js');
 
@@ -2863,7 +2911,7 @@ module.exports = $.ClearSprite({
     }
 });
 
-},{"../collisions/lerp.js":52,"./label.js":56,"dragonjs":13}],56:[function(require,module,exports){
+},{"../collisions/lerp.js":53,"./label.js":57,"dragonjs":13}],57:[function(require,module,exports){
 var $ = require('dragonjs');
 
 module.exports = $.ui.Label({
@@ -2877,7 +2925,7 @@ module.exports = $.ui.Label({
     }
 });
 
-},{"dragonjs":13}],57:[function(require,module,exports){
+},{"dragonjs":13}],58:[function(require,module,exports){
 var $ = require('dragonjs');
 
 /**
@@ -2905,4 +2953,4 @@ module.exports = function (opts) {
     });
 };
 
-},{"../collisions/lerp.js":52,"dragonjs":13}]},{},[53]);
+},{"../collisions/lerp.js":53,"dragonjs":13}]},{},[54]);
