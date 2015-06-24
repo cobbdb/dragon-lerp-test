@@ -616,13 +616,12 @@ module.exports = function (opts) {
         handleCollisions: function () {
             activeCollisions.forEach(function (pivot) {
                 activeCollisions.forEach(function (other) {
-                    var intersects, colliding, solids,
+                    var intersects, colliding,
                         valid = pivot.canCollideWith(other.id);
 
                     if (valid) {
                         intersects = pivot.intersects(other.mask);
                         colliding = pivot.isCollidingWith(other.id);
-                        solids = pivot.solid && other.solid;
                         /**
                          * (colliding) ongoing intersection
                          * (collide) first collided: no collide -> colliding
