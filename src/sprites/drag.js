@@ -16,7 +16,6 @@ module.exports = $.ClearSprite({
     update: function () {
         var offset;
         if (this.dragging) {
-            label.stop();
             offset = $.Mouse.offset;
             this.move($.Point(
                 offset.x - this.size.width / 2,
@@ -39,6 +38,10 @@ module.exports = $.ClearSprite({
             }
         }
         this.base.update();
+    },
+    move: function (pos) {
+        label.stop();
+        this.base.move(pos);
     },
     draw: function (ctx) {
         ctx.fillStyle = '#b6ff00';

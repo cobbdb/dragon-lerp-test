@@ -501,10 +501,8 @@ module.exports = function (opts) {
          * @param {Point|Vector} offset
          */
         shift: function (offset) {
-            this.pos.add(offset || this.speed, true);
-            if (!opts.freemask) {
-                this.base.move(this.pos);
-            }
+            var target = this.pos.add(offset || this.speed);
+            this.move(target);
         }
     });
 };
@@ -688,8 +686,8 @@ module.exports = function (opts) {
      */
     opts.on['colliding/$/solid'] = function (other) {
         // if (moved) needs to go away.. too situational
-        if (moved) {
-            console.debug(this.name, '\tsolid collide()');
+        //if (true) {//moved) {
+        if (!other.isCollidingWith(this.id)) {
             var top = this.mask.bottom - other.mask.top,
                 right = other.mask.right - this.mask.left,
                 bottom = other.mask.bottom - this.mask.top,
@@ -739,7 +737,6 @@ module.exports = function (opts) {
          * @param {Point} pos
          */
         move: function (pos) {
-            console.debug(this.name, 'move()');
             var curPos = this.mask.pos(),
                 newPos = pos.add(this.offset);
             if (!newPos.equals(curPos)) {
@@ -766,10 +763,16 @@ module.exports = function (opts) {
             updated = false;
             collisionsThisFrame = {};
         },
+        /**
+         * @param {Number} id
+         */
         addCollision: function (id) {
             activeCollisions[id] = true;
             collisionsThisFrame[id] = true;
         },
+        /**
+         * @param {Number} id
+         */
         removeCollision: function (id) {
             activeCollisions[id] = false;
         },
@@ -782,6 +785,9 @@ module.exports = function (opts) {
         isCollidingWith: function (id) {
             return activeCollisions[id] || false;
         },
+        /**
+         * @param {Number} id
+         */
         canCollideWith: function (id) {
             var self = this.id === id,
                 already = collisionsThisFrame[id];
@@ -875,32 +881,32 @@ module.exports = Collection().add([
     CollisionItem({
         name: 'screenedge/top',
         mask: Rectangle(
-            Point(0, -9),
-            Dimension(canvas.width, 10)
+            Point(0, -20),
+            Dimension(canvas.width, 20)
         ),
         collisionSets: dragonCollisions
     }),
     CollisionItem({
         name: 'screenedge/right',
         mask: Rectangle(
-            Point(canvas.width - 1, 0),
-            Dimension(10, canvas.height)
+            Point(canvas.width, 0),
+            Dimension(20, canvas.height)
         ),
         collisionSets: dragonCollisions
     }),
     CollisionItem({
         name: 'screenedge/bottom',
         mask: Rectangle(
-            Point(0, canvas.height - 1),
-            Dimension(canvas.width, 10)
+            Point(0, canvas.height),
+            Dimension(canvas.width, 20)
         ),
         collisionSets: dragonCollisions
     }),
     CollisionItem({
         name: 'screenedge/left',
         mask: Rectangle(
-            Point(-9, 0),
-            Dimension(10, canvas.height)
+            Point(-20, 0),
+            Dimension(20, canvas.height)
         ),
         collisionSets: dragonCollisions
     })
@@ -1345,10 +1351,10 @@ module.exports = function (pos, size) {
         intersects: {
             rectangle: function (rect) {
                 return (
-                    this.x <= rect.right &&
-                    this.right >= rect.x &&
-                    this.y <= rect.bottom &&
-                    this.bottom >= rect.y
+                    this.x < rect.right &&
+                    this.right > rect.x &&
+                    this.y < rect.bottom &&
+                    this.bottom > rect.y
                 );
             },
             circle: function (circ) {
@@ -2833,7 +2839,8 @@ module.exports = $.Screen({
             pos: $.Point(
                 $.canvas.width / 2,
                 $.canvas.height / 2
-            )
+            ),
+            moving: false
         }),
         Static({
             pos: $.Point(
@@ -2876,7 +2883,6 @@ module.exports = $.ClearSprite({
     update: function () {
         var offset;
         if (this.dragging) {
-            label.stop();
             offset = $.Mouse.offset;
             this.move($.Point(
                 offset.x - this.size.width / 2,
@@ -2899,6 +2905,11 @@ module.exports = $.ClearSprite({
             }
         }
         this.base.update();
+    },
+    move: function (pos) {
+        console.debug('bang');
+        label.stop();
+        this.base.move(pos);
     },
     draw: function (ctx) {
         ctx.fillStyle = '#b6ff00';
@@ -2926,12 +2937,15 @@ module.exports = $.ui.Label({
 });
 
 },{"dragonjs":13}],58:[function(require,module,exports){
+(function (global){
 var $ = require('dragonjs');
 
 /**
  * @param {Point} opts.pos
+ * @param {Boolean} opts.moving
  */
 module.exports = function (opts) {
+    var theta = 0;
     opts.pos.subtract($.Point(-32, -32), true);
     return $.ClearSprite({
         name: 'static',
@@ -2949,8 +2963,18 @@ module.exports = function (opts) {
                 this.size.width,
                 this.size.height
             );
+        },
+        update: function () {
+            if (opts.moving) {
+                theta += 0.1;
+                theta %= 3.1415;
+                this.speed.x = 2 * global.Math.sin(theta);
+                this.speed.y = 2 * global.Math.cos(theta);
+            }
+            this.base.update();
         }
     });
 };
 
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"../collisions/lerp.js":53,"dragonjs":13}]},{},[54]);

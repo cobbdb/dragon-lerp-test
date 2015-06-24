@@ -2,8 +2,10 @@ var $ = require('dragonjs');
 
 /**
  * @param {Point} opts.pos
+ * @param {Boolean} opts.moving
  */
 module.exports = function (opts) {
+    var theta = 0;
     opts.pos.subtract($.Point(-32, -32), true);
     return $.ClearSprite({
         name: 'static',
@@ -21,6 +23,15 @@ module.exports = function (opts) {
                 this.size.width,
                 this.size.height
             );
+        },
+        update: function () {
+            if (opts.moving) {
+                theta += 0.1;
+                theta %= 3.1415;
+                this.speed.x = 2 * global.Math.sin(theta);
+                this.speed.y = 2 * global.Math.cos(theta);
+            }
+            this.base.update();
         }
     });
 };

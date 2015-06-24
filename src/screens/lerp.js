@@ -11,7 +11,8 @@ module.exports = $.Screen({
             pos: $.Point(
                 $.canvas.width / 2,
                 $.canvas.height / 2
-            )
+            ),
+            moving: false
         }),
         Static({
             pos: $.Point(
