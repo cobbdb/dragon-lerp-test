@@ -2,7 +2,6 @@ var $ = require('dragonjs'),
     Static = require('../sprites/static.js');
 
 module.exports = $.Screen({
-    name: 'lerp',
     collisionSets: [
         require('../collisions/lerp.js')
     ],

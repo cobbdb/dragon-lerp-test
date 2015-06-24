@@ -2,8 +2,6 @@ var $ = require('dragonjs'),
     label = require('./label.js');
 
 module.exports = $.ClearSprite({
-    name: 'drag',
-    solid: true,
     depth: 10,
     collisionSets: [
         $.collisions,
@@ -13,7 +11,7 @@ module.exports = $.ClearSprite({
     size: $.Dimension(32, 32),
     pos: $.Point(20, 20),
     on: {
-        'colliding/$/solid': function (other) {
+        'colliding.solid': function (other) {
             this.flushWith(other);
         }
     }

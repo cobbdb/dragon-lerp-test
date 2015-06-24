@@ -445,6 +445,7 @@ module.exports = function (opts) {
 
     Util.mergeDefaults(opts, {
         name: 'dragon-sprite',
+        kind: 'dragon-sprite',
         mask: Rectangle(),
         one: {}
     });
@@ -520,6 +521,7 @@ module.exports = function (opts) {
     var removed = false;
     return Item(opts).extend({
         name: 'dragon-collection',
+        kind: 'dragon-collection',
         set: [],
         map: {},
         /**
@@ -630,21 +632,19 @@ module.exports = function (opts) {
                         if (intersects) {
                             pivot.addCollision(other.id);
                             if (!colliding) {
-                                pivot.trigger('collide/' + other.name, other);
-                                if (solids) {
-                                    pivot.trigger('collide/$/solid', other);
-                                }
+                                pivot.trigger('collide#' + other.name, other);
+                                pivot.trigger('collide.' + other.kind, other);
                             }
-                            pivot.trigger('colliding/' + other.name, other);
-                            if (solids) {
-                                pivot.trigger('colliding/$/solid', other);
-                            }
+                            pivot.trigger('colliding#' + other.name, other);
+                            pivot.trigger('colliding.' + other.kind, other);
                         } else {
                             if (colliding) {
                                 pivot.removeCollision(other.id);
-                                pivot.trigger('separate/' + other.name, other);
+                                pivot.trigger('separate#' + other.name, other);
+                                pivot.trigger('separate.' + other.kind, other);
                             }
-                            pivot.trigger('miss/' + other.name, other);
+                            pivot.trigger('miss#' + other.name, other);
+                            pivot.trigger('miss.' + other.kind, other);
                         }
                     }
                 });
@@ -662,14 +662,13 @@ var Counter = require('./util/id-counter.js'),
     Rectangle = require('./geom/rectangle.js'),
     Point = require('./geom/point.js'),
     Item = require('./item.js'),
-    Mouse = require('./io/mouse.js');
+    Mouse = require('./io/mouse.js'),
+    Util = require('./util/object.js');
 
 /**
  * @class CollisionItem
  * @extends Item
  * @param {Shape} [opts.mask] Defaults to Rectangle.
- * @param {Boolean} [opts.solid] True to collide with other
- * solid sprites.
  * @param {Array|CollisionHandler} [opts.collisionSets]
  */
 module.exports = function (opts) {
@@ -678,10 +677,15 @@ module.exports = function (opts) {
         updated = false,
         collisionSets = [].concat(opts.collisionSets || []);
 
+    Util.mergeDefaults(opts, {
+        name: 'dragon-collidable',
+        kind: 'dragon-collidable',
+        on: {}
+    });
+
     // Provide easy way to track when dragged.
-    opts.on = opts.on || {};
-    opts.on['collide/screendrag'] = [].concat(
-        opts.on['collide/screendrag'] || [],
+    opts.on['collide#screendrag'] = [].concat(
+        opts.on['collide#screendrag'] || [],
         function () {
             if (!this.dragging) {
                 this.dragging = true;
@@ -694,9 +698,7 @@ module.exports = function (opts) {
 
     return Item(opts).extend({
         id: Counter.nextId,
-        name: opts.name || 'dragon-collidable',
         dragging: false,
-        solid: opts.solid || false,
         mask: opts.mask || Rectangle(),
         offset: opts.offset || Point(),
         /**
@@ -786,7 +788,7 @@ module.exports = function (opts) {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./geom/point.js":19,"./geom/rectangle.js":21,"./io/mouse.js":32,"./item.js":33,"./util/id-counter.js":48}],13:[function(require,module,exports){
+},{"./geom/point.js":19,"./geom/rectangle.js":21,"./io/mouse.js":32,"./item.js":33,"./util/id-counter.js":48,"./util/object.js":50}],13:[function(require,module,exports){
 var Game = require('./game.js'),
     SetUtil = require('./util/set.js'),
     ObjUtil = require('./util/object.js');
@@ -1957,6 +1959,7 @@ var BaseClass = require('baseclassjs'),
  * and Screens.
  * @implements Eventable
  * @param {String} [name]
+ * @param {String} [kind]
  * @param {Map Of Functions} [opts.on] Dictionary of events.
  * @param {Map of Functions} [opts.one] Dictionary of one-time events.
  */
@@ -1965,6 +1968,7 @@ module.exports = function (opts) {
 
     return BaseClass({
         name: opts.name || 'dragon-item',
+        kind: opts.kind || 'dragon-item',
         depth: 0,
         updating: (typeof opts.updating === 'boolean') ? opts.updating : true,
         drawing: (typeof opts.drawing === 'boolean') ? opts.drawing : true,
@@ -2087,26 +2091,27 @@ Mouse.on.down(function () {
 }, module.exports);
 
 },{"../collision-item.js":12,"../dragon-collisions.js":14,"../geom/circle.js":17,"../geom/point.js":19,"../io/mouse.js":32}],37:[function(require,module,exports){
-var SpriteSet = require('./sprite-set.js');
+var SpriteSet = require('./sprite-set.js'),
+    Util = require('./util/object.js');
 
 /**
  * @class Screen
  * @extends SpriteSet
  * @param {Array|Sprite} [opts.spriteSet]
  * @param {Array|CollisionHandler} [opts.collisionSets]
- * @param {String} opts.name
- * @param {Number} [opts.depth] Defaults to 0.
- * @param {Object} [opts.on] Dictionary of events.
- * @param {Object} [opts.one] Dictionary of one-time events.
  */
 module.exports = function (opts) {
     var loaded = false,
         collisionMap = {};
 
-    return SpriteSet(opts).extend({
-        name: opts.name,
+    Util.mergeDefaults(opts, {
+        name: 'dragon-screen',
+        kind: 'dragon-screen',
         updating: false,
-        drawing: false,
+        drawing: false
+    });
+
+    return SpriteSet(opts).extend({
         load: function (cb) {
             if (!loaded) {
                 this.addCollisionSets(opts.collisionSets);
@@ -2213,7 +2218,7 @@ module.exports = function (opts) {
     });
 };
 
-},{"./sprite-set.js":38}],38:[function(require,module,exports){
+},{"./sprite-set.js":38,"./util/object.js":50}],38:[function(require,module,exports){
 var Counter = require('./util/id-counter.js'),
     Collection = require('./collection.js');
 
@@ -2290,6 +2295,7 @@ module.exports = function (opts) {
 
     Util.mergeDefaults(opts, {
         name: 'dragon-texture-sprite',
+        kind: 'dragon-texture-sprite',
         startingStrip: opts.startingStrip || global.Object.keys(stripMap)[0],
     });
     opts.size = opts.size || (stripMap[opts.startingStrip] || {}).size;
@@ -2819,7 +2825,6 @@ var $ = require('dragonjs'),
     Static = require('../sprites/static.js');
 
 module.exports = $.Screen({
-    name: 'lerp',
     collisionSets: [
         require('../collisions/lerp.js')
     ],
@@ -2858,8 +2863,6 @@ var $ = require('dragonjs'),
     label = require('./label.js');
 
 module.exports = $.ClearSprite({
-    name: 'drag',
-    solid: true,
     depth: 10,
     collisionSets: [
         $.collisions,
@@ -2869,7 +2872,7 @@ module.exports = $.ClearSprite({
     size: $.Dimension(32, 32),
     pos: $.Point(20, 20),
     on: {
-        'colliding/$/solid': function (other) {
+        'colliding.solid': function (other) {
             this.flushWith(other);
         }
     }
@@ -2941,8 +2944,7 @@ module.exports = function (opts) {
     var theta = 0;
     opts.pos.subtract($.Point(-32, -32), true);
     return $.ClearSprite({
-        name: 'static',
-        solid: true,
+        kind: 'solid',
         collisionSets: require('../collisions/lerp.js'),
         mask: $.Rectangle(),
         size: $.Dimension(64, 64),

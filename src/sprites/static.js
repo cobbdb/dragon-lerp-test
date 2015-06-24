@@ -8,8 +8,7 @@ module.exports = function (opts) {
     var theta = 0;
     opts.pos.subtract($.Point(-32, -32), true);
     return $.ClearSprite({
-        name: 'static',
-        solid: true,
+        kind: 'solid',
         collisionSets: require('../collisions/lerp.js'),
         mask: $.Rectangle(),
         size: $.Dimension(64, 64),
