@@ -11,7 +11,12 @@ module.exports = $.ClearSprite({
     ],
     mask: $.Rectangle(),
     size: $.Dimension(32, 32),
-    pos: $.Point(20, 20)
+    pos: $.Point(20, 20),
+    on: {
+        'colliding/$/solid': function (other) {
+            this.flushWith(other);
+        }
+    }
 }).extend({
     update: function () {
         var offset;

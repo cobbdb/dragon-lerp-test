@@ -676,43 +676,10 @@ module.exports = function (opts) {
     var activeCollisions = {},
         collisionsThisFrame = {},
         updated = false,
-        moved = false,
         collisionSets = [].concat(opts.collisionSets || []);
 
-    opts.on = opts.on || {};
-
-    /**
-     * @param {CollisionItem} other
-     */
-    opts.on['colliding/$/solid'] = function (other) {
-        // if (moved) needs to go away.. too situational
-        //if (true) {//moved) {
-        if (!other.isCollidingWith(this.id)) {
-            var top = this.mask.bottom - other.mask.top,
-                right = other.mask.right - this.mask.left,
-                bottom = other.mask.bottom - this.mask.top,
-                left = this.mask.right - other.mask.left,
-                min = global.Math.min(top, right, bottom, left),
-                target = this.pos.clone();
-            switch (min) {
-                case top:
-                    target.y = other.mask.y - this.mask.height;
-                    break;
-                case right:
-                    target.x = other.mask.right;
-                    break;
-                case bottom:
-                    target.y = other.mask.bottom;
-                    break;
-                default:
-                    target.x = other.mask.x - this.mask.width;
-                    break;
-            }
-            this.move(target);
-        }
-    };
-
     // Provide easy way to track when dragged.
+    opts.on = opts.on || {};
     opts.on['collide/screendrag'] = [].concat(
         opts.on['collide/screendrag'] || [],
         function () {
@@ -737,12 +704,35 @@ module.exports = function (opts) {
          * @param {Point} pos
          */
         move: function (pos) {
-            var curPos = this.mask.pos(),
-                newPos = pos.add(this.offset);
-            if (!newPos.equals(curPos)) {
-                moved = true;
-                this.mask.move(newPos);
+            this.mask.move(
+                pos.add(this.offset)
+            );
+        },
+        /**
+         * @param {CollisionItem} other
+         */
+        flushWith: function (other) {
+            var top = this.mask.bottom - other.mask.top,
+                right = other.mask.right - this.mask.left,
+                bottom = other.mask.bottom - this.mask.top,
+                left = this.mask.right - other.mask.left,
+                min = global.Math.min(top, right, bottom, left),
+                target = this.pos.clone();
+            switch (min) {
+                case top:
+                    target.y = other.mask.y - this.mask.height;
+                    break;
+                case right:
+                    target.x = other.mask.right;
+                    break;
+                case bottom:
+                    target.y = other.mask.bottom;
+                    break;
+                default:
+                    target.x = other.mask.x - this.mask.width;
+                    break;
             }
+            this.move(target);
         },
         /**
          * @param {Shape} mask
@@ -759,7 +749,6 @@ module.exports = function (opts) {
             }
         },
         teardown: function () {
-            moved = false;
             updated = false;
             collisionsThisFrame = {};
         },
@@ -2878,7 +2867,12 @@ module.exports = $.ClearSprite({
     ],
     mask: $.Rectangle(),
     size: $.Dimension(32, 32),
-    pos: $.Point(20, 20)
+    pos: $.Point(20, 20),
+    on: {
+        'colliding/$/solid': function (other) {
+            this.flushWith(other);
+        }
+    }
 }).extend({
     update: function () {
         var offset;
@@ -2907,7 +2901,6 @@ module.exports = $.ClearSprite({
         this.base.update();
     },
     move: function (pos) {
-        console.debug('bang');
         label.stop();
         this.base.move(pos);
     },
